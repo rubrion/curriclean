@@ -1,34 +1,34 @@
----
-title: FastAPI + Selenium Webdriver
-description: A FastAPI server with Selenium set up
-tags:
-  - fastapi
-  - python
-  - selenium
----
+# SpecFit Backend
 
-# FastAPI Example
+FastAPI service for the SpecFit job-application tracker.
 
-This example starts up a [FastAPI](https://fastapi.tiangolo.com/) server with selenium already configured.
+## Stack
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/pXu4Vv?referralCode=qL1H20)
+- Python 3.12, async FastAPI
+- SQLModel + Alembic on PostgreSQL (JSONB for stored LLM analysis)
+- `pydantic-ai` agent for structured LLM output, via OpenRouter (OpenAI-compatible)
+- `logfire` instrumentation (FastAPI, SQLAlchemy, HTTPX, pydantic-ai)
 
-## ✨ Features
+## Local dev
 
-- FastAPI
-- Python 3
-- Selenium
+```bash
+cp .env.example .env
+# fill OPENROUTER_API_KEY, set DATABASE_URL to your local Postgres
 
-## 💁‍♀️ How to use
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
 
-- Deploy using the button 👆
-- Clone locally and install packages with Pip using `pip install -r requirements.txt` or Poetry using `poetry install`
-- Connect to your project using `railway link`
-- Run locally using `uvicorn main:app --reload`
+## Validation gate
 
-## 📝 Notes
+```bash
+ruff check app tests
+ruff format --check app tests
+pyright
+pytest
+```
 
-- To learn about how to use FastAPI with most of its features, you can visit the [FastAPI Documentation](https://fastapi.tiangolo.com/tutorial/).
-- FastAPI provides automatic documentation to call and test your API directly from the browser. You can access it at `/docs` with [Swagger](https://github.com/swagger-api/swagger-ui) or at `/redoc` with [Redoc](https://github.com/Rebilly/ReDoc).
-- Selenium Webdriver is an automation library designed to enable testing and scraping of websites. Learn more about [Selenium](https://www.selenium.dev/documentation/webdriver/getting_started/)
-- Thank you to the original [FastAPI Template](https://github.com/railwayapp-templates/fastapi)
+## Railway
+
+`DATABASE_URL` is injected by the Postgres plugin. Set `OPENROUTER_API_KEY`, optional `OPENROUTER_MODEL`, `LOGFIRE_TOKEN`, `CORS_ORIGINS`. Start command runs `alembic upgrade head` before serving.

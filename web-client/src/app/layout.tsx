@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	title: "SpecFit",
-	description: "SpecFit",
+	description: "Open-source job application tracker with LLM-powered CV matching.",
 };
 
 export default function RootLayout({

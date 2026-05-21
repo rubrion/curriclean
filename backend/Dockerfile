@@ -1,20 +1,22 @@
-ARG PORT=443
+FROM python:3.12-slim AS base
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
+WORKDIR /app
 
-FROM cypress/browsers:latest
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-
-RUN apt-get install python3 -y
-
-RUN echo $(python3 -m site --user-base)
-
-COPY requirements.txt  .
-
-ENV PATH /home/root/.local/bin:${PATH}
-
-RUN  apt-get update && apt-get install -y python3-pip && pip install -r requirements.txt  
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+ENV PORT=8000
+EXPOSE 8000
+
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
