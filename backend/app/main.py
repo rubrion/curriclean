@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import engine
-from app.routers import applications, auth, match
+from app.routers import applications, auth, cv, match, suggestions
 
 
 def _configure_logfire() -> None:
@@ -52,6 +52,8 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(applications.router)
     app.include_router(match.router)
+    app.include_router(cv.router)
+    app.include_router(suggestions.router)
 
     @app.get("/health", tags=["meta"])
     async def health() -> dict[str, str]:

@@ -5,6 +5,7 @@ import { use, useEffect, useState } from "react";
 
 import { MatchPanel } from "@/components/MatchPanel";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SuggestedProfilesPanel } from "@/components/SuggestedProfilesPanel";
 import { api, ApiError } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
@@ -143,6 +144,8 @@ export default function ApplicationDetailPage({
 					{app.description}
 				</pre>
 			</section>
+
+			<SuggestedProfilesPanel applicationId={app.id} />
 
 			<MatchPanel application={app} initialResult={initialResult} onResult={onMatchResult} />
 		</div>

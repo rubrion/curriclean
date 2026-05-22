@@ -74,3 +74,17 @@ export interface MatchResponse {
 	metrics: MatchMetrics;
 	updated_at: string;
 }
+
+export interface CvParseResponse {
+	text: string;
+}
+
+export interface ProfileHit {
+	url: string;
+	title: string;
+	description: string;
+}
+
+export interface SuggestedProfilesResponse {
+	hits: ProfileHit[];
+}

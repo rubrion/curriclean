@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api, ApiError } from "@/lib/api";
 import { scoreShade } from "@/lib/format";
@@ -17,10 +17,37 @@ export function MatchPanel({
 	onResult: (r: MatchResponse) => void;
 }) {
 	const bearer = useBearer();
+	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [cvText, setCvText] = useState("");
 	const [result, setResult] = useState<MatchResponse | null>(initialResult);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<{ message: string; retryable: boolean } | null>(null);
+	const [uploading, setUploading] = useState(false);
+	const [uploadError, setUploadError] = useState<string | null>(null);
+
+	async function onPdfChosen(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		e.target.value = "";
+		if (!file) return;
+		if (!bearer) {
+			setUploadError("Not signed in.");
+			return;
+		}
+		setUploadError(null);
+		setUploading(true);
+		try {
+			const res = await api.parseCvPdf(bearer, file);
+			setCvText(res.text);
+		} catch (e: unknown) {
+			if (e instanceof ApiError) {
+				setUploadError(stringifyDetail(e));
+			} else {
+				setUploadError("Network error.");
+			}
+		} finally {
+			setUploading(false);
+		}
+	}
 
 	async function run(force = false) {
 		setError(null);
@@ -52,8 +79,29 @@ export function MatchPanel({
 			<div className="flex flex-col gap-2">
 				<h2 className="text-lg font-semibold tracking-tight">Match analysis</h2>
 				<p className="font-mono text-xs text-[#64748b]">
-					Paste your CV text. Hashed against job description for idempotent caching.
+					Paste your CV text or upload a PDF. Hashed against job description for idempotent caching.
 				</p>
+			</div>
+
+			<div className="flex flex-wrap items-center gap-3">
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept="application/pdf"
+					onChange={onPdfChosen}
+					className="hidden"
+				/>
+				<button
+					type="button"
+					onClick={() => fileInputRef.current?.click()}
+					disabled={uploading}
+					className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider hover:border-[#fafafa] disabled:opacity-40"
+				>
+					{uploading ? "Parsing PDF…" : "Upload PDF"}
+				</button>
+				{uploadError && (
+					<span className="font-mono text-xs text-[#fafafa]">{uploadError}</span>
+				)}
 			</div>
 
 			<textarea

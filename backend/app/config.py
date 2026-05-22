@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     FRONTEND_BASE_URL: str = "http://localhost:3000"
     AUTH_SHARED_SECRET: str = ""
 
+    BRAVE_API_KEY: str = ""
+    BRAVE_SEARCH_URL: str = "https://api.search.brave.com/res/v1/web/search"
+    CV_PDF_MAX_BYTES: int = 5_000_000
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

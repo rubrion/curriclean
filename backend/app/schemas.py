@@ -63,3 +63,17 @@ class MatchResponse(BaseModel):
     analysis: MatchAnalysis
     metrics: MatchMetrics
     updated_at: datetime
+
+
+class CvParseResponse(BaseModel):
+    text: str
+
+
+class ProfileHit(BaseModel):
+    url: str
+    title: str
+    description: str
+
+
+class SuggestedProfilesResponse(BaseModel):
+    hits: list[ProfileHit]

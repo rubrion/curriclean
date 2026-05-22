@@ -3,7 +3,9 @@ import type {
 	ApplicationCreate,
 	ApplicationStatus,
 	ApplicationUpdate,
+	CvParseResponse,
 	MatchResponse,
+	SuggestedProfilesResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -107,6 +109,49 @@ export const api = {
 			method: "POST",
 			body: JSON.stringify({ cv_text: cvText }),
 		});
+	},
+
+	async parseCvPdf(
+		bearer: string | null | undefined,
+		file: File,
+	): Promise<CvParseResponse> {
+		const form = new FormData();
+		form.append("file", file);
+		const headers: Record<string, string> = {};
+		if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
+
+		const res = await fetch(`${API_URL}/cv/parse-pdf`, {
+			method: "POST",
+			body: form,
+			headers,
+		});
+		if (!res.ok) {
+			let detail: unknown = undefined;
+			try {
+				const body = (await res.json()) as { detail?: unknown };
+				detail = body?.detail ?? body;
+			} catch {
+				detail = await res.text().catch(() => undefined);
+			}
+			throw new ApiError(
+				res.status,
+				`PDF parse failed: ${res.status} ${res.statusText}`,
+				detail,
+			);
+		}
+		return (await res.json()) as CvParseResponse;
+	},
+
+	getSuggestedProfiles(
+		bearer: string | null | undefined,
+		applicationId: string,
+		limit = 10,
+	): Promise<SuggestedProfilesResponse> {
+		return request<SuggestedProfilesResponse>(
+			`/applications/${applicationId}/suggested-profiles?limit=${limit}`,
+			bearer,
+			{ method: "POST" },
+		);
 	},
 };
 

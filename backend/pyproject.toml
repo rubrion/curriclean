@@ -20,6 +20,8 @@ dependencies = [
     "pyjwt>=2.10.0",
     "bcrypt>=4.2.0",
     "resend>=2.0.0",
+    "pypdf>=5.0.0",
+    "python-multipart>=0.0.12",
 ]
 
 [project.optional-dependencies]
