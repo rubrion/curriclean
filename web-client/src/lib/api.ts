@@ -145,10 +145,12 @@ export const api = {
 	getSuggestedProfiles(
 		bearer: string | null | undefined,
 		applicationId: string,
-		limit = 10,
+		opts: { refresh?: boolean; limit?: number } = {},
 	): Promise<SuggestedProfilesResponse> {
+		const refresh = opts.refresh ? "true" : "false";
+		const limit = opts.limit ?? 10;
 		return request<SuggestedProfilesResponse>(
-			`/applications/${applicationId}/suggested-profiles?limit=${limit}`,
+			`/applications/${applicationId}/suggested-profiles?refresh=${refresh}&limit=${limit}`,
 			bearer,
 			{ method: "POST" },
 		);

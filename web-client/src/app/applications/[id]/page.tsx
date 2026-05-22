@@ -145,7 +145,11 @@ export default function ApplicationDetailPage({
 				</pre>
 			</section>
 
-			<SuggestedProfilesPanel applicationId={app.id} />
+			<SuggestedProfilesPanel
+				applicationId={app.id}
+				initialHits={app.suggested_profiles?.hits ?? null}
+				initialUpdatedAt={app.suggested_profiles_updated_at}
+			/>
 
 			<MatchPanel application={app} initialResult={initialResult} onResult={onMatchResult} />
 		</div>

@@ -3,15 +3,27 @@
 import { useState } from "react";
 
 import { api, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 import type { ProfileHit } from "@/lib/types";
 import { useBearer } from "@/lib/useBearer";
 
-export function SuggestedProfilesPanel({ applicationId }: { applicationId: string }) {
+export function SuggestedProfilesPanel({
+	applicationId,
+	initialHits,
+	initialUpdatedAt,
+}: {
+	applicationId: string;
+	initialHits: ProfileHit[] | null;
+	initialUpdatedAt: string | null;
+}) {
 	const bearer = useBearer();
-	const [hits, setHits] = useState<ProfileHit[] | null>(null);
+	const [hits, setHits] = useState<ProfileHit[] | null>(initialHits);
+	const [updatedAt, setUpdatedAt] = useState<string | null>(initialUpdatedAt);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [notConfigured, setNotConfigured] = useState(false);
+
+	const hasData = hits !== null && hits.length > 0;
 
 	async function fetchHits() {
 		if (!bearer) {
@@ -22,17 +34,22 @@ export function SuggestedProfilesPanel({ applicationId }: { applicationId: strin
 		setNotConfigured(false);
 		setLoading(true);
 		try {
-			const res = await api.getSuggestedProfiles(bearer, applicationId);
+			const res = await api.getSuggestedProfiles(bearer, applicationId, {
+				refresh: hasData,
+			});
 			setHits(res.hits);
+			setUpdatedAt(new Date().toISOString());
 		} catch (e: unknown) {
 			if (e instanceof ApiError) {
 				if (e.status === 503) {
-					setNotConfigured(true);
+					if (!hasData) setNotConfigured(true);
+					else setError("LinkedIn search not configured. Showing previous results.");
 				} else {
-					setError(typeof e.detail === "string" ? e.detail : e.message);
+					const msg = typeof e.detail === "string" ? e.detail : e.message;
+					setError(hasData ? `${msg}. Showing previous results.` : msg);
 				}
 			} else {
-				setError("Network error.");
+				setError(hasData ? "Network error. Showing previous results." : "Network error.");
 			}
 		} finally {
 			setLoading(false);
@@ -41,21 +58,28 @@ export function SuggestedProfilesPanel({ applicationId }: { applicationId: strin
 
 	return (
 		<section className="flex flex-col gap-3">
-			<div className="flex items-center justify-between gap-4">
+			<div className="flex items-start justify-between gap-4">
 				<div className="flex flex-col">
 					<h2 className="text-lg font-semibold tracking-tight">Suggested profiles</h2>
 					<p className="font-mono text-xs text-[#64748b]">
 						LinkedIn profiles relevant to this role, via Brave Search.
 					</p>
 				</div>
-				<button
-					type="button"
-					onClick={fetchHits}
-					disabled={loading}
-					className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider hover:border-[#fafafa] disabled:opacity-40"
-				>
-					{loading ? "Searching…" : "Find profiles"}
-				</button>
+				<div className="flex flex-col items-end gap-1">
+					<button
+						type="button"
+						onClick={fetchHits}
+						disabled={loading}
+						className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider hover:border-[#fafafa] disabled:opacity-40"
+					>
+						{loading ? "Searching…" : hasData ? "Refresh" : "Find profiles"}
+					</button>
+					{updatedAt && (
+						<span className="font-mono text-xs text-[#64748b]">
+							updated {formatDateTime(updatedAt)}
+						</span>
+					)}
+				</div>
 			</div>
 
 			{notConfigured && (

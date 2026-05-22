@@ -25,8 +25,14 @@ export interface Application {
 	analysis: StoredAnalysis | null;
 	analysis_hash: string | null;
 	analysis_updated_at: string | null;
+	suggested_profiles: StoredSuggestedProfiles | null;
+	suggested_profiles_updated_at: string | null;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface StoredSuggestedProfiles {
+	hits: ProfileHit[];
 }
 
 export interface ApplicationCreate {

@@ -32,6 +32,8 @@ class ApplicationRead(BaseModel):
     analysis: dict | None
     analysis_hash: str | None
     analysis_updated_at: datetime | None
+    suggested_profiles: dict | None
+    suggested_profiles_updated_at: datetime | None
     created_at: datetime
     updated_at: datetime
 

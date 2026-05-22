@@ -24,6 +24,8 @@ def _to_read(app: Application) -> ApplicationRead:
         analysis=app.analysis,
         analysis_hash=app.analysis_hash,
         analysis_updated_at=app.analysis_updated_at,
+        suggested_profiles=app.suggested_profiles,
+        suggested_profiles_updated_at=app.suggested_profiles_updated_at,
         created_at=app.created_at,
         updated_at=app.updated_at,
     )
