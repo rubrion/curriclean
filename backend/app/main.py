@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import engine
-from app.routers import applications, match
+from app.routers import applications, auth, match
 
 
 @asynccontextmanager
@@ -43,6 +43,7 @@ def create_app() -> FastAPI:
 
     logfire.instrument_fastapi(app, capture_headers=False)
 
+    app.include_router(auth.router)
     app.include_router(applications.router)
     app.include_router(match.router)
 

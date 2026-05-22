@@ -1,6 +1,16 @@
-import { Header } from "@/components/Header";
+import { redirect } from "next/navigation";
 
-export default function ApplicationsLayout({ children }: { children: React.ReactNode }) {
+import { Header } from "@/components/Header";
+import { auth } from "@/lib/auth";
+
+export default async function ApplicationsLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	const session = await auth();
+	if (!session) redirect("/login");
+
 	return (
 		<div className="min-h-screen">
 			<Header />

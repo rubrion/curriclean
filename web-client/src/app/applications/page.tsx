@@ -7,20 +7,23 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from "@/lib/types";
+import { useBearer } from "@/lib/useBearer";
 
 export default function ApplicationsPage() {
+	const bearer = useBearer();
 	const [items, setItems] = useState<Application[] | null>(null);
 	const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		if (!bearer) return;
 		let cancelled = false;
 		setLoading(true);
 		setError(null);
 		const status = statusFilter === "all" ? undefined : statusFilter;
 		api
-			.listApplications(status)
+			.listApplications(bearer, status)
 			.then((rows) => {
 				if (!cancelled) setItems(rows);
 			})
@@ -35,7 +38,7 @@ export default function ApplicationsPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [statusFilter]);
+	}, [statusFilter, bearer]);
 
 	return (
 		<div className="flex flex-col gap-6">

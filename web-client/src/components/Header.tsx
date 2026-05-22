@@ -1,6 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 
 export function Header() {
+	const { data } = useSession();
+	const email = data?.user?.email;
+
 	return (
 		<header className="border-b border-[#fafafa]/20">
 			<div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
@@ -24,6 +30,18 @@ export function Header() {
 					>
 						New
 					</Link>
+					{email && (
+						<>
+							<span className="font-mono text-xs text-[#64748b]">{email}</span>
+							<button
+								type="button"
+								onClick={() => signOut({ callbackUrl: "/login" })}
+								className="font-mono text-xs text-[#64748b] hover:text-[#fafafa] hover:underline"
+							>
+								Sign out
+							</button>
+						</>
+					)}
 				</nav>
 			</div>
 		</header>

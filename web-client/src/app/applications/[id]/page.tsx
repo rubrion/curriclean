@@ -13,6 +13,7 @@ import {
 	type ApplicationStatus,
 	type MatchResponse,
 } from "@/lib/types";
+import { useBearer } from "@/lib/useBearer";
 
 export default function ApplicationDetailPage({
 	params,
@@ -20,16 +21,18 @@ export default function ApplicationDetailPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = use(params);
+	const bearer = useBearer();
 	const [app, setApp] = useState<Application | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
+		if (!bearer) return;
 		let cancelled = false;
 		setLoading(true);
 		setError(null);
 		api
-			.getApplication(id)
+			.getApplication(bearer, id)
 			.then((a) => {
 				if (!cancelled) setApp(a);
 			})
@@ -44,12 +47,12 @@ export default function ApplicationDetailPage({
 		return () => {
 			cancelled = true;
 		};
-	}, [id]);
+	}, [id, bearer]);
 
 	async function changeStatus(s: ApplicationStatus) {
-		if (!app) return;
+		if (!app || !bearer) return;
 		try {
-			const updated = await api.updateApplication(app.id, { status: s });
+			const updated = await api.updateApplication(bearer, app.id, { status: s });
 			setApp(updated);
 		} catch (e: unknown) {
 			setError(e instanceof ApiError ? e.message : "Failed to update status.");

@@ -5,9 +5,11 @@ import { useState } from "react";
 
 import { api, ApiError } from "@/lib/api";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/types";
+import { useBearer } from "@/lib/useBearer";
 
 export default function NewApplicationPage() {
 	const router = useRouter();
+	const bearer = useBearer();
 	const [company, setCompany] = useState("");
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -21,7 +23,12 @@ export default function NewApplicationPage() {
 		setError(null);
 		setSubmitting(true);
 		try {
-			const created = await api.createApplication({
+			if (!bearer) {
+				setError("Not signed in.");
+				setSubmitting(false);
+				return;
+			}
+			const created = await api.createApplication(bearer, {
 				company: company.trim(),
 				title: title.trim(),
 				description,

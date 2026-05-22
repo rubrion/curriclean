@@ -23,13 +23,20 @@ export class ApiError extends Error {
 	}
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+	path: string,
+	bearer: string | null | undefined,
+	init?: RequestInit,
+): Promise<T> {
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		...((init?.headers as Record<string, string>) ?? {}),
+	};
+	if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
+
 	const res = await fetch(`${API_URL}${path}`, {
 		...init,
-		headers: {
-			"Content-Type": "application/json",
-			...(init?.headers ?? {}),
-		},
+		headers,
 	});
 
 	if (!res.ok) {
@@ -52,38 +59,59 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-	listApplications(status?: ApplicationStatus): Promise<Application[]> {
+	listApplications(
+		bearer: string | null | undefined,
+		status?: ApplicationStatus,
+	): Promise<Application[]> {
 		const qs = status ? `?status=${encodeURIComponent(status)}` : "";
-		return request<Application[]>(`/applications${qs}`);
+		return request<Application[]>(`/applications${qs}`, bearer);
 	},
 
-	getApplication(id: string): Promise<Application> {
-		return request<Application>(`/applications/${id}`);
+	getApplication(bearer: string | null | undefined, id: string): Promise<Application> {
+		return request<Application>(`/applications/${id}`, bearer);
 	},
 
-	createApplication(payload: ApplicationCreate): Promise<Application> {
-		return request<Application>("/applications", {
+	createApplication(
+		bearer: string | null | undefined,
+		payload: ApplicationCreate,
+	): Promise<Application> {
+		return request<Application>(`/applications`, bearer, {
 			method: "POST",
 			body: JSON.stringify(payload),
 		});
 	},
 
-	updateApplication(id: string, payload: ApplicationUpdate): Promise<Application> {
-		return request<Application>(`/applications/${id}`, {
+	updateApplication(
+		bearer: string | null | undefined,
+		id: string,
+		payload: ApplicationUpdate,
+	): Promise<Application> {
+		return request<Application>(`/applications/${id}`, bearer, {
 			method: "PATCH",
 			body: JSON.stringify(payload),
 		});
 	},
 
-	deleteApplication(id: string): Promise<void> {
-		return request<void>(`/applications/${id}`, { method: "DELETE" });
+	deleteApplication(bearer: string | null | undefined, id: string): Promise<void> {
+		return request<void>(`/applications/${id}`, bearer, { method: "DELETE" });
 	},
 
-	runMatch(id: string, cvText: string, force = false): Promise<MatchResponse> {
+	runMatch(
+		bearer: string | null | undefined,
+		id: string,
+		cvText: string,
+		force = false,
+	): Promise<MatchResponse> {
 		const qs = force ? "?force=true" : "";
-		return request<MatchResponse>(`/applications/${id}/match${qs}`, {
+		return request<MatchResponse>(`/applications/${id}/match${qs}`, bearer, {
 			method: "POST",
 			body: JSON.stringify({ cv_text: cvText }),
 		});
 	},
 };
+
+export type SessionLike = { backendJwt?: string | null } | null | undefined;
+
+export function bearerFromSession(session: SessionLike): string | null {
+	return session?.backendJwt ?? null;
+}

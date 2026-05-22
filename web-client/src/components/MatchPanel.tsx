@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { scoreShade } from "@/lib/format";
 import type { Application, MatchResponse } from "@/lib/types";
+import { useBearer } from "@/lib/useBearer";
 
 export function MatchPanel({
 	application,
@@ -15,6 +16,7 @@ export function MatchPanel({
 	initialResult: MatchResponse | null;
 	onResult: (r: MatchResponse) => void;
 }) {
+	const bearer = useBearer();
 	const [cvText, setCvText] = useState("");
 	const [result, setResult] = useState<MatchResponse | null>(initialResult);
 	const [loading, setLoading] = useState(false);
@@ -24,7 +26,12 @@ export function MatchPanel({
 		setError(null);
 		setLoading(true);
 		try {
-			const r = await api.runMatch(application.id, cvText, force);
+			if (!bearer) {
+				setError({ message: "Not signed in.", retryable: false });
+				setLoading(false);
+				return;
+			}
+			const r = await api.runMatch(bearer, application.id, cvText, force);
 			setResult(r);
 			onResult(r);
 		} catch (e: unknown) {

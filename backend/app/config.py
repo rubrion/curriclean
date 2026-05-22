@@ -24,6 +24,14 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    BACKEND_JWT_SECRET: str = ""
+    DAILY_TOKEN_BUDGET: int = 50_000
+
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "SpecFit <onboarding@resend.dev>"
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
+    AUTH_SHARED_SECRET: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
@@ -42,9 +50,7 @@ class Settings(BaseSettings):
         url = self.DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
-        return url.replace("+asyncpg", "").replace(
-            "postgresql://", "postgresql+psycopg://"
-        )
+        return url.replace("+asyncpg", "").replace("postgresql://", "postgresql+psycopg://")
 
 
 @lru_cache

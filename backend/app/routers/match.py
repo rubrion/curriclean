@@ -5,9 +5,11 @@ import logfire
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import get_current_user
 from app.database import get_session
-from app.models import Application
+from app.models import Application, User
 from app.schemas import MatchAnalysis, MatchMetrics, MatchRequest, MatchResponse
+from app.services import budget
 from app.services.llm import compute_cache_key, run_analysis
 
 router = APIRouter(prefix="/applications", tags=["match"])
@@ -19,9 +21,10 @@ async def match_application(
     payload: MatchRequest,
     force: bool = Query(default=False),
     session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
 ) -> MatchResponse:
     app = await session.get(Application, application_id)
-    if app is None:
+    if app is None or app.user_id != user.id:
         raise HTTPException(status_code=404, detail="Application not found")
 
     from app.config import get_settings
@@ -42,6 +45,8 @@ async def match_application(
                 metrics=cached_metrics,
                 updated_at=app.analysis_updated_at,
             )
+
+    await budget.assert_under_cap(session, user.id)
 
     try:
         result = await run_analysis(app.description, payload.cv_text)
@@ -72,6 +77,14 @@ async def match_application(
     session.add(app)
     await session.commit()
     await session.refresh(app)
+
+    await budget.record_usage(
+        session,
+        user.id,
+        tokens_in=result.tokens_in,
+        tokens_out=result.tokens_out,
+        cost_usd=result.cost_estimate_usd,
+    )
 
     return MatchResponse(
         application_id=app.id,
