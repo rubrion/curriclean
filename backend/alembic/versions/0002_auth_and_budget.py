@@ -19,7 +19,7 @@ down_revision: str | None = "0001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-DEMO_EMAIL = "demo@specfit.dev"
+DEMO_EMAIL = "samuelrubenscontato@gmail.com"
 
 
 def upgrade() -> None:

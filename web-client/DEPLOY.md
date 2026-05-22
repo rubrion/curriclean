@@ -127,7 +127,7 @@ After deploy, hit:
 
 - `https://<host>/` → redirects to `/login` if not signed in, otherwise `/applications`.
 - `/register` → submit a real email → Resend mail arrives → click verify → `/login?verified=1`.
-- `/login` → enter creds → land on `/applications` with 20 seeded demo rows (only for the `demo@specfit.dev` account).
+- `/login` → enter creds → land on `/applications` with 20 seeded demo rows (only for the `samuelrubenscontato@gmail.com` account).
 - Network tab → backend requests carry `Authorization: Bearer <jwt>`.
 - Hit the daily token cap → next `/match` returns `429 DAILY_TOKEN_LIMIT`.
 

@@ -9,8 +9,7 @@ from app.database import engine
 from app.routers import applications, auth, match
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
+def _configure_logfire() -> None:
     settings = get_settings()
     logfire.configure(
         service_name="specfit-backend",
@@ -21,6 +20,13 @@ async def lifespan(_: FastAPI):
     logfire.instrument_pydantic_ai()
     logfire.instrument_httpx(capture_all=True)
     logfire.instrument_sqlalchemy(engine=engine.sync_engine)
+
+
+_configure_logfire()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
     yield
     await engine.dispose()
 

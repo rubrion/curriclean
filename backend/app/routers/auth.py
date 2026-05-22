@@ -158,7 +158,7 @@ async def forgot(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     user = await _get_user_by_email(session, payload.email)
-    if user is not None and user.email_verified is not None and user.password_hash:
+    if user is not None and user.email_verified is not None:
         token = await tokens.mint(session, tokens.RESET_PREFIX, payload.email.lower())
         reset_url = f"{get_settings().FRONTEND_BASE_URL.rstrip('/')}/reset?token={token}"
         send_password_reset_email(payload.email.lower(), reset_url)

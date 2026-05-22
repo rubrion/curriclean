@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     DAILY_TOKEN_BUDGET: int = 50_000
 
     RESEND_API_KEY: str = ""
-    EMAIL_FROM: str = "SpecFit <onboarding@resend.dev>"
+    EMAIL_FROM: str = "SpecFit <specfit@rubrion.ai>"
     FRONTEND_BASE_URL: str = "http://localhost:3000"
     AUTH_SHARED_SECRET: str = ""
 
