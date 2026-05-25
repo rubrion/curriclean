@@ -95,7 +95,7 @@ export function MatchPanel({
 					type="button"
 					onClick={() => fileInputRef.current?.click()}
 					disabled={uploading}
-					className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider hover:border-[#fafafa] disabled:opacity-40"
+					className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#fafafa]"
 				>
 					{uploading ? "Parsing PDF…" : "Upload PDF"}
 				</button>
@@ -125,7 +125,7 @@ export function MatchPanel({
 					type="button"
 					disabled={!canSubmit}
 					onClick={() => run(true)}
-					className="border border-[#fafafa]/60 px-4 py-2 hover:border-[#fafafa] disabled:opacity-40"
+					className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#fafafa]"
 					title="Bypass cache"
 				>
 					Force regenerate
@@ -139,7 +139,7 @@ export function MatchPanel({
 						<button
 							type="button"
 							onClick={() => run(false)}
-							className="border border-[#fafafa] px-3 py-1 font-mono text-xs uppercase tracking-wider hover:bg-[#fafafa] hover:text-[#09090b]"
+							className="border border-[#fafafa] px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors hover:bg-[#fafafa] hover:text-[#09090b]"
 						>
 							Retry
 						</button>

@@ -129,7 +129,7 @@ function FilterChip({
 			className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
 				active
 					? "border-[#fafafa] bg-[#fafafa] text-[#09090b]"
-					: "border-[#fafafa]/40 text-[#fafafa] hover:border-[#fafafa]"
+					: "border-[#fafafa]/40 text-[#fafafa] hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
 			}`}
 		>
 			{label}

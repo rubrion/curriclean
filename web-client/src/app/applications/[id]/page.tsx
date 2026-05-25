@@ -124,7 +124,7 @@ export default function ApplicationDetailPage({
 							className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
 								app.status === s
 									? "border-[#fafafa] bg-[#fafafa] text-[#09090b]"
-									: "border-[#fafafa]/40 hover:border-[#fafafa]"
+									: "border-[#fafafa]/40 hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
 							}`}
 						>
 							{s}

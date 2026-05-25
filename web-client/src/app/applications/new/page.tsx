@@ -110,7 +110,7 @@ export default function NewApplicationPage() {
 					<button
 						type="button"
 						onClick={() => router.back()}
-						className="border border-[#fafafa]/60 px-4 py-2 hover:border-[#fafafa]"
+						className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
 					>
 						Cancel
 					</button>

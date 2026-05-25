@@ -100,7 +100,7 @@ function LoginInner() {
 						<button
 							type="button"
 							onClick={() => signIn("google", { callbackUrl })}
-							className="border border-[#fafafa]/60 px-4 py-2 hover:border-[#fafafa]"
+							className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
 						>
 							Continue with Google
 						</button>
@@ -109,7 +109,7 @@ function LoginInner() {
 						<button
 							type="button"
 							onClick={() => signIn("github", { callbackUrl })}
-							className="border border-[#fafafa]/60 px-4 py-2 hover:border-[#fafafa]"
+							className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
 						>
 							Continue with GitHub
 						</button>

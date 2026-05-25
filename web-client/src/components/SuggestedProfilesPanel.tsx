@@ -70,7 +70,7 @@ export function SuggestedProfilesPanel({
 						type="button"
 						onClick={fetchHits}
 						disabled={loading}
-						className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider hover:border-[#fafafa] disabled:opacity-40"
+						className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#fafafa]"
 					>
 						{loading ? "Searching…" : hasData ? "Refresh" : "Find profiles"}
 					</button>
