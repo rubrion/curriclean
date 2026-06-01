@@ -1,0 +1,64 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "specfit-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": { "enabled": true },
+	"upload_source_maps": true,
+
+	/**
+	 * D1 SQLite database — primary datastore
+	 * Create: wrangler d1 create specfit
+	 * Migrate: wrangler d1 migrations apply specfit --remote
+	 */
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "specfit",
+			"database_id": "72fdd235-8569-4d07-9067-69de4d0099fd",
+			"migrations_dir": "migrations"
+		}
+	],
+
+	/**
+	 * KV namespace — daily token budget cache (KV-first, D1 authoritative)
+	 * Create: wrangler kv namespace create specfit-budget-kv
+	 */
+	"kv_namespaces": [
+		{
+			"binding": "BUDGET_KV",
+			"id": "daac0ef61525468da7ca24749e9effae"
+		}
+	],
+
+	/**
+	 * Workers AI binding — LLM inference (llama-3.3-70b-instruct)
+	 * No provisioning needed; just declare the binding.
+	 */
+	"ai": { "binding": "AI" },
+
+	/**
+	 * Secrets — set via: wrangler secret put <NAME>
+	 *   JWT_SECRET          — HS256 signing secret for access tokens
+	 *   AUTH_SHARED_SECRET  — server-to-server OAuth upsert secret
+	 *   RESEND_API_KEY      — Resend transactional email
+	 *   BRAVE_API_KEY       — Brave Search API key (for profile suggestions)
+	 *   OPENROUTER_API_KEY  — (optional) fallback LLM via OpenRouter
+	 */
+
+	/**
+	 * Non-sensitive runtime vars (safe to commit)
+	 */
+	"vars": {
+		"DAILY_TOKEN_BUDGET": "50000",
+		"CV_PDF_MAX_BYTES": "5242880",
+		"FRONTEND_URL": "http://localhost:3000",
+		"OPENROUTER_MODEL": "openai/gpt-4o-mini",
+		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1"
+	}
+}
