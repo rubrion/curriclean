@@ -24,7 +24,7 @@ export async function sendVerifyEmail({
   frontendUrl,
 }: SendVerifyEmailParams): Promise<void> {
   const resend = new Resend(apiKey);
-  const link = `${frontendUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  const link = `${frontendUrl}/verify?token=${encodeURIComponent(token)}`;
 
   const { error } = await resend.emails.send({
     from,
@@ -51,7 +51,7 @@ export async function sendResetEmail({
   frontendUrl,
 }: SendResetEmailParams): Promise<void> {
   const resend = new Resend(apiKey);
-  const link = `${frontendUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
+  const link = `${frontendUrl}/reset?token=${encodeURIComponent(token)}`;
 
   const { error } = await resend.emails.send({
     from,
