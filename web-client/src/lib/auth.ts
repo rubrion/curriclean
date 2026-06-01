@@ -2,7 +2,6 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import { SignJWT } from "jose";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -13,10 +12,15 @@ type BackendUser = {
 	email_verified: boolean;
 };
 
+type BackendAuthResponse = {
+	token: string;
+	user: BackendUser;
+};
+
 async function loginAtBackend(
 	email: string,
 	password: string,
-): Promise<BackendUser | null> {
+): Promise<BackendAuthResponse | null> {
 	const res = await fetch(`${API_URL}/auth/login`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -26,14 +30,14 @@ async function loginAtBackend(
 		if (res.status === 401 || res.status === 403) return null;
 		throw new Error(`backend login failed: ${res.status}`);
 	}
-	return (await res.json()) as BackendUser;
+	return (await res.json()) as BackendAuthResponse;
 }
 
 async function oauthUpsertAtBackend(profile: {
 	email: string;
 	name?: string | null;
 	image?: string | null;
-}): Promise<BackendUser | null> {
+}): Promise<BackendAuthResponse | null> {
 	const secret = process.env.AUTH_SHARED_SECRET;
 	if (!secret) {
 		console.warn("AUTH_SHARED_SECRET not set; cannot upsert OAuth user");
@@ -52,18 +56,7 @@ async function oauthUpsertAtBackend(profile: {
 		}),
 	});
 	if (!res.ok) return null;
-	return (await res.json()) as BackendUser;
-}
-
-async function mintBackendJwt(userId: string, email: string): Promise<string> {
-	const secret = process.env.BACKEND_JWT_SECRET;
-	if (!secret) throw new Error("BACKEND_JWT_SECRET not configured");
-	return await new SignJWT({ email })
-		.setProtectedHeader({ alg: "HS256" })
-		.setSubject(userId)
-		.setIssuedAt()
-		.setExpirationTime("15m")
-		.sign(new TextEncoder().encode(secret));
+	return (await res.json()) as BackendAuthResponse;
 }
 
 const providers: NextAuthConfig["providers"] = [
@@ -76,12 +69,13 @@ const providers: NextAuthConfig["providers"] = [
 			const email = credentials?.email as string | undefined;
 			const password = credentials?.password as string | undefined;
 			if (!email || !password) return null;
-			const user = await loginAtBackend(email, password);
-			if (!user) return null;
+			const resp = await loginAtBackend(email, password);
+			if (!resp) return null;
 			return {
-				id: user.id,
-				email: user.email,
-				name: user.name ?? undefined,
+				id: resp.user.id,
+				email: resp.user.email,
+				name: resp.user.name ?? undefined,
+				backendJwt: resp.token,
 			};
 		},
 	}),
@@ -114,25 +108,24 @@ export const authConfig: NextAuthConfig = {
 			if (!account || account.provider === "credentials") return true;
 			const email = user.email;
 			if (!email) return false;
-			const backendUser = await oauthUpsertAtBackend({
+			const resp = await oauthUpsertAtBackend({
 				email,
 				name: user.name,
 				image: user.image,
 			});
-			if (!backendUser) return false;
-			user.id = backendUser.id;
+			if (!resp) return false;
+			user.id = resp.user.id;
+			// Attach the backend-issued JWT to the user object so the jwt callback can pick it up
+			(user as unknown as { backendJwt?: string }).backendJwt = resp.token;
 			return true;
 		},
 		async jwt({ token, user }) {
 			if (user) {
 				token.userId = user.id as string;
 				token.email = user.email as string;
-			}
-			if (token.userId && token.email) {
-				token.backendJwt = await mintBackendJwt(
-					token.userId as string,
-					token.email as string,
-				);
+				// Carry the backend-issued JWT forward into the session token
+				const backendJwt = (user as unknown as { backendJwt?: string }).backendJwt;
+				if (backendJwt) token.backendJwt = backendJwt;
 			}
 			return token;
 		},
