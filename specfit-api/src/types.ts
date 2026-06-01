@@ -111,6 +111,7 @@ export interface Env {
   DAILY_TOKEN_BUDGET: string;
   CV_PDF_MAX_BYTES: string;
   FRONTEND_URL: string;
+  EMAIL_FROM: string;
   OPENROUTER_MODEL: string;
   OPENROUTER_BASE_URL: string;
 }

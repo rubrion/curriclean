@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 interface SendVerifyEmailParams {
   apiKey: string;
+  from: string;
   to: string;
   token: string;
   frontendUrl: string;
@@ -9,6 +10,7 @@ interface SendVerifyEmailParams {
 
 interface SendResetEmailParams {
   apiKey: string;
+  from: string;
   to: string;
   token: string;
   frontendUrl: string;
@@ -16,6 +18,7 @@ interface SendResetEmailParams {
 
 export async function sendVerifyEmail({
   apiKey,
+  from,
   to,
   token,
   frontendUrl,
@@ -23,8 +26,8 @@ export async function sendVerifyEmail({
   const resend = new Resend(apiKey);
   const link = `${frontendUrl}/auth/verify?token=${encodeURIComponent(token)}`;
 
-  await resend.emails.send({
-    from: "SpecFit <noreply@specfit.app>",
+  const { error } = await resend.emails.send({
+    from,
     to,
     subject: "Verify your SpecFit email",
     html: `
@@ -34,10 +37,15 @@ export async function sendVerifyEmail({
       <p>If you did not create an account, you can safely ignore this email.</p>
     `,
   });
+
+  if (error) {
+    throw new EmailError(`Failed to send verification email: ${error.message}`);
+  }
 }
 
 export async function sendResetEmail({
   apiKey,
+  from,
   to,
   token,
   frontendUrl,
@@ -45,8 +53,8 @@ export async function sendResetEmail({
   const resend = new Resend(apiKey);
   const link = `${frontendUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
 
-  await resend.emails.send({
-    from: "SpecFit <noreply@specfit.app>",
+  const { error } = await resend.emails.send({
+    from,
     to,
     subject: "Reset your SpecFit password",
     html: `
@@ -56,4 +64,15 @@ export async function sendResetEmail({
       <p>If you did not request a password reset, you can safely ignore this email.</p>
     `,
   });
+
+  if (error) {
+    throw new EmailError(`Failed to send reset email: ${error.message}`);
+  }
+}
+
+export class EmailError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EmailError";
+  }
 }

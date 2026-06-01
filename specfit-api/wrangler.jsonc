@@ -58,6 +58,7 @@
 		"DAILY_TOKEN_BUDGET": "50000",
 		"CV_PDF_MAX_BYTES": "5242880",
 		"FRONTEND_URL": "https://specfit.rubrion.ai",
+		"EMAIL_FROM": "SpecFit <specfit@rubrion.ai>",
 		"OPENROUTER_MODEL": "openai/gpt-4o-mini",
 		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1"
 	}

@@ -10,6 +10,9 @@ AUTH_SHARED_SECRET=your_auth_shared_secret_here
 # Resend transactional email API key
 RESEND_API_KEY=re_xxxxxxxxxxxx
 
+# Sender address — must be a verified Resend domain, or use onboarding@resend.dev for dev
+EMAIL_FROM=SpecFit <specfit@rubrion.ai>
+
 # Brave Search API key (for LinkedIn profile suggestions)
 BRAVE_API_KEY=your_brave_api_key_here
 
