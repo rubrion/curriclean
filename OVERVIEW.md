@@ -8,11 +8,11 @@ Paste a job description and your CV to receive a structured fit score, matched s
 
 | Layer | Platform |
 |-------|----------|
-| Backend | [Railway](https://railway.app) — FastAPI, Python 3.12, Docker |
-| Database | Railway Postgres 16 (JSONB) |
+| Backend | [Cloudflare Workers](https://workers.cloudflare.com) — Hono, TypeScript (`specfit-api/`) |
+| Database | [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) |
+| Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
+| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (default `llama-3.3-70b-instruct-fp8-fast`); optional [OpenRouter](https://openrouter.ai) fallback |
 | Frontend | [Cloudflare Workers](https://workers.cloudflare.com) via `@opennextjs/cloudflare` (Next.js 16) |
-| LLM gateway | [OpenRouter](https://openrouter.ai) (default `openai/gpt-4o-mini`) |
 | Email | [Resend](https://resend.com) |
-| Observability | [Pydantic Logfire](https://logfire.pydantic.dev) |
 
 Repository: [github.com/rubrion/specfit](https://github.com/rubrion/specfit)

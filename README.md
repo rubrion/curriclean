@@ -6,49 +6,45 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 
 ## Features
 
-- **CV PDF upload** — drop a PDF resume on the application detail page; the backend extracts text with `pypdf` and populates the CV field. 5MB limit. Scanned-only PDFs are rejected.
+- **CV PDF upload** — drop a PDF resume on the application detail page; the backend extracts text with `unpdf` and populates the CV field. 5 MB limit. Scanned-only PDFs are rejected.
 - **LLM match analysis** — paste/upload CV → structured fit score, strengths, gaps, interview questions. Results cached per `(model, job_description, cv_text)` hash; re-run with `?force=true`.
-- **Suggested LinkedIn profiles** — single button per application queries the [Brave Search API](https://brave.com/search/api/) for `site:linkedin.com/in/` hits matching the role + company. Results are cached on the row (JSONB column); "Refresh" re-fetches and keeps the previous list if the new fetch fails.
+- **Suggested LinkedIn profiles** — single button per application queries the [Brave Search API](https://brave.com/search/api/) for `site:linkedin.com/in/` hits matching the role + company. Results cached on the row; "Refresh" re-fetches and keeps the previous list if the new fetch fails.
 - **Status tracking** — `saved` → `applied` → `interviewing` → `offer` / `rejected` / `withdrawn`.
-- **Authentication** — Auth.js (NextAuth v5) with credentials (Resend-verified email + bcrypt) and optional Google / GitHub OAuth. Backend trusts a 15-minute HS256 bearer JWT minted by the web client.
-- **Per-user daily token budget** — every `/match` call deducts from a daily cap tracked in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`.
+- **Authentication** — email + password (Resend-verified, bcrypt) and optional Google / GitHub OAuth. The backend issues HS256 bearer JWTs; the frontend uses Auth.js with the same secret.
+- **Per-user daily token budget** — every `/match` call deducts from a daily cap tracked in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`. Budget reads are KV-first for ~1 ms edge latency.
 
 ## Platform
 
 | Layer | Platform |
 |-------|----------|
-| Backend runtime | [Railway](https://railway.app) — Docker image, auto-injected `DATABASE_URL` |
-| Database | Railway Postgres (PostgreSQL 16, `JSONB`) |
-| Frontend runtime | [Cloudflare Workers](https://workers.cloudflare.com) via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) |
-| LLM gateway | [OpenRouter](https://openrouter.ai) (default model `openai/gpt-4o-mini`) |
+| Backend runtime | [Cloudflare Workers](https://workers.cloudflare.com) — Hono, TypeScript |
+| Database | [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) |
+| Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
+| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`llama-3.3-70b-instruct-fp8-fast`); optional [OpenRouter](https://openrouter.ai) fallback |
+| Frontend runtime | [Cloudflare Workers](https://workers.cloudflare.com) via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) (Next.js 16) |
 | Transactional email | [Resend](https://resend.com) (verify + password-reset) |
-| Observability | [Pydantic Logfire](https://logfire.pydantic.dev) (SDK + MCP) |
 
 ## Stack
 
-### Backend (`backend/`)
+### Backend (`specfit-api/`)
 
-- **Language**: Python 3.12
-- **Framework**: FastAPI (async)
-- **ORM**: SQLModel on SQLAlchemy 2 async
-- **Migrations**: Alembic (real migration files; no metadata auto-create)
-- **DB drivers**: `asyncpg` (runtime), `psycopg[binary]` (migrations)
-- **Auth**: own credentials store with `bcrypt` hashes, verify/reset tokens via `verification_tokens` table, OAuth upsert endpoint
-- **Bearer**: HS256 JWT (`PyJWT`) minted by the web client and verified by every request
+- **Language**: TypeScript (strict)
+- **Framework**: [Hono](https://hono.dev)
+- **Runtime**: Cloudflare Workers
+- **Database**: Cloudflare D1 (SQLite) — plain SQL migrations, no ORM
+- **Auth**: own credentials store with `bcryptjs` hashes, verify/reset tokens, OAuth upsert endpoint; HS256 JWT issued by the Worker via Web Crypto
 - **Email**: Resend SDK
-- **LLM client**: [`pydantic-ai`](https://ai.pydantic.dev) with `OpenAIModel` + `OpenAIProvider` pointed at OpenRouter
-- **Caching**: SHA256 hash of `(model, job_description, cv_text)` against `Application.analysis_hash`; bypass with `?force=true`
-- **Budget**: per-user daily token cap in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`
-- **Tracing**: Logfire instrumentation for FastAPI, SQLAlchemy, httpx, pydantic-ai
-- **Lint / typecheck / test**: `ruff`, `pyright`, `pytest`
-- **Container**: `python:3.12-slim`, `boot.sh` runs `alembic upgrade head` then `uvicorn`
+- **LLM**: Cloudflare Workers AI with structured JSON output; OpenRouter as optional fallback
+- **Caching**: SHA-256 hash of `(model, job_description, cv_text)` against `analysis_hash`; bypass with `?force=true`
+- **Budget**: per-user daily token cap in `token_usage`; KV-first reads, D1 as source of truth; over-cap returns `429 DAILY_TOKEN_LIMIT`
+- **PDF parsing**: `unpdf` (edge-compatible, no Node.js fs dependency)
+- **Validation**: Zod
 
 ### Frontend (`web-client/`)
 
 - **Framework**: Next.js 16 (App Router)
 - **Runtime**: React 19
 - **Auth**: [Auth.js v5 (NextAuth)](https://authjs.dev) with Credentials + Google + GitHub providers, JWT session strategy
-- **Token mint**: `jose` HS256 — every session carries a 15-minute bearer that the FastAPI backend validates
 - **Styling**: Tailwind CSS v4
 - **Language**: TypeScript (strict)
 - **Deploy adapter**: `@opennextjs/cloudflare` → Cloudflare Workers
@@ -59,99 +55,90 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 
 | Table | Purpose |
 |-------|---------|
-| `users` | id (UUID), email (unique), password_hash (nullable for OAuth), email_verified, name, image |
+| `users` | id (TEXT/UUID), email (unique), password_hash (nullable for OAuth), email_verified, name, image |
 | `verification_tokens` | identifier (`verify:<email>` or `reset:<email>`) + token + expires |
-| `token_usage` | user_id, day (date), tokens_in, tokens_out, cost_usd — unique on (user_id, day) |
-| `applications` | id, user_id (FK), company, title, description, applied_at, status, analysis (JSONB), analysis_hash, suggested_profiles (JSONB), suggested_profiles_updated_at, timestamps |
+| `token_usage` | user_id, day (TEXT, YYYY-MM-DD), tokens_in, tokens_out, cost_usd — unique on (user_id, day) |
+| `applications` | id, user_id (FK), company, title, description, applied_at, status, analysis (JSON text), analysis_hash, suggested_profiles (JSON text), timestamps |
 
 Status enum: `saved`, `applied`, `interviewing`, `offer`, `rejected`, `withdrawn`.
 
-CV text is **never persisted**. Only the SHA256 hash and the structured analysis are stored.
+CV text is **never persisted**. Only the SHA-256 hash and the structured analysis are stored.
 
 ## API
 
-All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. `/auth/*` (except oauth-upsert) and `/healthz` are public.
+All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. `/auth/*` (except oauth-upsert) and `/health` are public.
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
+| `GET`  | `/health` | — | Liveness |
 | `POST` | `/auth/register` | — | Create unverified user, send verify email |
 | `POST` | `/auth/verify` | — | Consume verify token, mark email verified |
-| `POST` | `/auth/login` | — | Validate password + verified status (called by Auth.js) |
+| `POST` | `/auth/login` | — | Validate password + verified status → returns `{ token, user }` |
 | `POST` | `/auth/forgot` | — | Send reset email (always 200) |
 | `POST` | `/auth/reset` | — | Consume reset token, set new password |
-| `POST` | `/auth/oauth-upsert` | `X-Auth-Secret` | Find-or-create user from OAuth profile |
+| `POST` | `/auth/oauth-upsert` | `X-Auth-Secret` | Find-or-create user from OAuth profile → returns `{ token, user }` |
 | `GET`  | `/applications` | Bearer | List own applications |
 | `POST` | `/applications` | Bearer | Create |
-| `GET`  | `/applications/{id}` | Bearer | Detail (own only) |
-| `PATCH`| `/applications/{id}` | Bearer | Partial update |
-| `DELETE`| `/applications/{id}` | Bearer | Remove |
-| `POST` | `/applications/{id}/match?force=false` | Bearer | Run LLM match. Returns cached unless `force=true`. Deducts from daily budget. |
-| `POST` | `/applications/{id}/suggested-profiles?refresh=false` | Bearer | Cached LinkedIn profile hits via Brave Search. `refresh=true` re-fetches; falls back to cached on error. |
+| `GET`  | `/applications/:id` | Bearer | Detail (own only) |
+| `PATCH`| `/applications/:id` | Bearer | Partial update |
+| `DELETE`| `/applications/:id` | Bearer | Remove |
+| `POST` | `/applications/:id/match?force=false` | Bearer | Run LLM match. Returns cached unless `force=true`. Deducts from daily budget. |
+| `POST` | `/applications/:id/suggested-profiles?refresh=false` | Bearer | Cached LinkedIn profile hits via Brave Search. `refresh=true` re-fetches; falls back to cached on error. |
 | `POST` | `/cv/parse-pdf` (multipart) | Bearer | Extract plain text from a PDF resume. |
-| `GET`  | `/healthz` | — | Liveness |
 
 ## Environment variables
 
-### Backend
+See [environment-variables.md](environment-variables.md) for the full reference.
 
-| Key | Required | Default |
-|-----|----------|---------|
-| `DATABASE_URL` | yes | injected by Railway |
-| `OPENROUTER_API_KEY` | yes | — |
-| `OPENROUTER_MODEL` | no | `openai/gpt-4o-mini` |
-| `OPENROUTER_BASE_URL` | no | `https://openrouter.ai/api/v1` |
-| `BACKEND_JWT_SECRET` | yes | shared with the Worker; HS256 secret for bearer JWTs |
-| `AUTH_SHARED_SECRET` | yes (if OAuth) | shared with the Worker; required on `/auth/oauth-upsert` |
-| `DAILY_TOKEN_BUDGET` | no | `50000` |
-| `BRAVE_API_KEY` | no | enables `/applications/{id}/suggested-profiles`; empty hides the feature |
-| `BRAVE_SEARCH_URL` | no | `https://api.search.brave.com/res/v1/web/search` |
-| `CV_PDF_MAX_BYTES` | no | `5000000` |
-| `RESEND_API_KEY` | yes | for verify/reset emails |
-| `EMAIL_FROM` | yes | verified Resend sender |
-| `FRONTEND_BASE_URL` | yes | origin used in mailed links |
-| `CORS_ORIGINS` | no | `http://localhost:3000` |
-| `LOGFIRE_TOKEN` | no | — |
-| `LOGFIRE_SEND_TO_LOGFIRE` | no | `if-token-present` |
-| `APP_ENV` | no | `development` |
+### Backend secrets (set via `wrangler secret put`)
 
-### Frontend
+| Key | Required |
+|-----|----------|
+| `JWT_SECRET` | yes |
+| `AUTH_SHARED_SECRET` | yes (if OAuth) |
+| `RESEND_API_KEY` | yes |
+| `BRAVE_API_KEY` | no |
+| `OPENROUTER_API_KEY` | no |
 
-| Key | Required | Where | Notes |
-|-----|----------|-------|-------|
-| `NEXT_PUBLIC_API_URL` | yes | build-time | backend base URL |
-| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | no | build-time | `1` to show Google button |
-| `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | no | build-time | `1` to show GitHub button |
-| `AUTH_SECRET` | yes | wrangler secret | Auth.js session encryption |
-| `BACKEND_JWT_SECRET` | yes | wrangler secret | same value as backend |
-| `AUTH_SHARED_SECRET` | yes (if OAuth) | wrangler secret | same value as backend |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | no | wrangler secret | Google OAuth |
-| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | no | wrangler secret | GitHub OAuth |
+### Frontend secrets (set via `wrangler secret put`)
+
+| Key | Required |
+|-----|----------|
+| `AUTH_SECRET` | yes |
+| `JWT_SECRET` | yes |
+| `AUTH_SHARED_SECRET` | yes (if OAuth) |
 
 ## Local development
 
 ```bash
 # Backend
-cd backend
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e ".[dev]"
-cp .env.example .env   # fill in secrets
-alembic upgrade head
-uvicorn app.main:app --reload
-
-# Seed demo data (optional)
-python -m scripts.seed --reset
+cd specfit-api
+bun install
+cp .dev.vars.example .dev.vars   # fill in secrets
+wrangler d1 migrations apply specfit --local
+bun run dev                       # → http://localhost:8787
 
 # Frontend
 cd web-client
 npm install
-cp .env.example .env.local   # fill in secrets
+cp .env.example .env.local        # fill in secrets
 npm run dev
 ```
 
 ## Deploy
 
-- **Backend**: push `backend/` to Railway. Attach the Postgres plugin (auto-injects `DATABASE_URL`). Set `OPENROUTER_API_KEY`, `BACKEND_JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `FRONTEND_BASE_URL`, `CORS_ORIGINS`. Railway builds the Dockerfile and runs `boot.sh` (alembic + uvicorn).
-- **Frontend**: see [`web-client/DEPLOY.md`](web-client/DEPLOY.md). Set build-time vars in `.env.production` and runtime secrets via `wrangler secret put`, then `npm run deploy`.
+See [deployment.md](deployment.md) for the full guide.
+
+```bash
+# Backend
+cd specfit-api
+wrangler d1 migrations apply specfit --remote
+bun run deploy
+
+# Frontend
+cd web-client
+npm run deploy
+```
 
 ## License
 

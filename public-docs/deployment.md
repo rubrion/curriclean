@@ -1,18 +1,44 @@
 # Deployment
 
-## Backend — Railway
+## Backend — Cloudflare Workers (`specfit-api/`)
 
-Push `backend/` to Railway. Attach the Postgres plugin (auto-injects `DATABASE_URL`). Set the following env vars:
+### First-time setup
 
-- `OPENROUTER_API_KEY`
-- `BACKEND_JWT_SECRET`
-- `AUTH_SHARED_SECRET`
-- `RESEND_API_KEY`
-- `EMAIL_FROM`
-- `FRONTEND_BASE_URL`
-- `CORS_ORIGINS`
+```sh
+cd specfit-api
 
-Railway builds the Dockerfile and runs `boot.sh` (`alembic upgrade head` then `uvicorn`).
+# 1. Create Cloudflare resources (skip if already provisioned)
+wrangler d1 create specfit
+wrangler kv namespace create specfit-budget-kv
+# Copy the returned IDs into wrangler.jsonc
+
+# 2. Apply database migrations
+wrangler d1 migrations apply specfit --remote
+
+# 3. Set secrets
+wrangler secret put JWT_SECRET
+wrangler secret put AUTH_SHARED_SECRET
+wrangler secret put RESEND_API_KEY
+wrangler secret put BRAVE_API_KEY
+# Optional: only needed to use OpenRouter instead of Workers AI
+wrangler secret put OPENROUTER_API_KEY
+```
+
+### Deploy
+
+```sh
+bun run deploy
+```
+
+### Update schema (future migrations)
+
+Add a new `.sql` file to `specfit-api/migrations/` following the `NNN_description.sql` naming convention, then:
+
+```sh
+wrangler d1 migrations apply specfit --remote
+```
+
+---
 
 ## Frontend — Cloudflare Workers
 
@@ -20,7 +46,7 @@ See `web-client/DEPLOY.md` for the full guide. Set build-time vars in `.env.prod
 
 ```sh
 wrangler secret put AUTH_SECRET
-wrangler secret put BACKEND_JWT_SECRET
+wrangler secret put JWT_SECRET          # same value as backend JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
 # OAuth (optional)
 wrangler secret put AUTH_GOOGLE_ID

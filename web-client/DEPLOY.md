@@ -1,104 +1,136 @@
-# Deploying SpecFit Web Client (Cloudflare Workers)
+# Deploying SpecFit (Cloudflare Workers)
 
-The web client deploys to Cloudflare Workers via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). All user/auth state lives in the FastAPI backend (Railway + Postgres). The Worker holds no DB connection of its own.
+Both the backend (`specfit-api/`) and the web client (`web-client/`) deploy to Cloudflare Workers. There is no Railway or external server.
 
-## One-time setup
+---
 
-1. **Cloudflare account.** Authenticate Wrangler once:
+## Backend (`specfit-api/`)
+
+### One-time setup
+
+1. **Authenticate Wrangler:**
 
    ```bash
    npx wrangler login
    ```
 
-2. **Backend URL.** Decide your production API origin (Railway-hosted FastAPI, e.g. `https://specfit-api-production.up.railway.app`).
+2. **Create Cloudflare resources** (skip if already provisioned):
 
-3. **CORS.** On the backend, set `CORS_ORIGINS` to include the Worker URL (e.g. `https://specfit.<subdomain>.workers.dev` or your custom domain).
+   ```bash
+   cd specfit-api
+   wrangler d1 create specfit                   # copy database_id into wrangler.jsonc
+   wrangler kv namespace create specfit-budget-kv  # copy id into wrangler.jsonc
+   ```
 
-4. **Resend.** Sign up at [resend.com](https://resend.com) (free tier: 100/day, 3000/mo).
-   - Verify a sending domain — or use `onboarding@resend.dev` for dev.
-   - Create an API key.
-   - Set `RESEND_API_KEY` + `EMAIL_FROM` on the **backend** (not on the Worker — only the backend sends mail).
+3. **Apply the schema:**
 
-5. **OAuth (optional).** Create Google and/or GitHub OAuth apps.
-   - Callback URLs:
-     - Local: `http://localhost:3000/api/auth/callback/google` and `/github`
-     - Prod: `https://<your-worker-host>/api/auth/callback/google` and `/github`
+   ```bash
+   wrangler d1 migrations apply specfit --remote
+   ```
 
-## Environment variables
+4. **Set secrets:**
 
-### Build-time (baked into the client bundle by `next build`)
+   ```bash
+   wrangler secret put JWT_SECRET           # HS256 signing secret; must match the frontend
+   wrangler secret put AUTH_SHARED_SECRET   # X-Auth-Secret for OAuth upsert; must match the frontend
+   wrangler secret put RESEND_API_KEY       # Resend transactional email
+   wrangler secret put BRAVE_API_KEY        # Brave Search (LinkedIn suggestions); optional
+   # Optional: use OpenRouter instead of Workers AI
+   wrangler secret put OPENROUTER_API_KEY
+   ```
 
-Set these in `.env.production` locally, or in Cloudflare dashboard → Workers → Settings → Build variables (Workers Builds CI).
+5. **Resend.** Sign up at [resend.com](https://resend.com) and verify a sending domain (or use `onboarding@resend.dev` for dev). Set `FRONTEND_URL` in `wrangler.jsonc → vars` to your frontend Worker URL so verify/reset links are correct.
 
-| Variable | Notes |
-| --- | --- |
-| `NEXT_PUBLIC_API_URL` | Backend base URL. |
-| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Set to `1` to show the Google sign-in button. |
-| `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | Set to `1` to show the GitHub sign-in button. |
+6. **OAuth (optional).** Create Google and/or GitHub OAuth apps. Callback URLs:
+   - Local: `http://localhost:3000/api/auth/callback/google` and `/github`
+   - Prod: `https://<your-worker-host>/api/auth/callback/google` and `/github`
 
-### Runtime (Wrangler secrets)
-
-Set with `npx wrangler secret put <NAME>` for each environment you deploy to. Never put these in `vars`.
-
-| Secret | Purpose |
-| --- | --- |
-| `AUTH_SECRET` | Auth.js session JWT/cookie encryption. `openssl rand -base64 32`. |
-| `BACKEND_JWT_SECRET` | HS256 secret to mint short-lived bearer tokens for the backend. **Must match the backend's value.** |
-| `AUTH_SHARED_SECRET` | Sent on `X-Auth-Secret` when the Worker calls backend `/auth/oauth-upsert`. **Must match the backend's value.** |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth credentials (optional). |
-| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth credentials (optional). |
-
-### Backend env (Railway) — for context
-
-| Key | Required | Notes |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | Auto-injected by Railway Postgres plugin. |
-| `OPENROUTER_API_KEY` | yes | OpenRouter key. |
-| `BACKEND_JWT_SECRET` | yes | Same value as the Worker secret above. |
-| `AUTH_SHARED_SECRET` | yes (if OAuth) | Same value as the Worker secret above. |
-| `DAILY_TOKEN_BUDGET` | no | Per-user daily LLM token cap. Default `50000`. |
-| `RESEND_API_KEY` | yes | For verify / reset emails. |
-| `EMAIL_FROM` | yes | Verified Resend sender, e.g. `SpecFit <auth@yourdomain.com>`. |
-| `FRONTEND_BASE_URL` | yes | Origin used in verify/reset email links, e.g. `https://specfit.<sub>.workers.dev`. |
-| `CORS_ORIGINS` | yes | Worker origin(s), comma-separated. |
-| `LOGFIRE_TOKEN` | no | If unset, traces are local-only. |
-
-## Local preview (workerd runtime)
+### Deploy
 
 ```bash
-npm run preview
+cd specfit-api
+bun run deploy
 ```
 
-Uses `.dev.vars` for runtime values and `.env.local` for build-time values.
+### Future schema migrations
 
-## Deploy from your machine
+Add a new `.sql` file to `specfit-api/migrations/` using `NNN_description.sql` naming, then:
 
 ```bash
-# 1. fill in build-time vars
+wrangler d1 migrations apply specfit --remote
+```
+
+---
+
+## Frontend (`web-client/`)
+
+### Environment variables
+
+**Build-time** (set in `.env.production` or Cloudflare dashboard → Workers → Build variables):
+
+| Variable | Notes |
+|----------|-------|
+| `NEXT_PUBLIC_API_URL` | Backend Worker URL, e.g. `https://specfit-api.<sub>.workers.dev` |
+| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Set to `1` to show the Google sign-in button |
+| `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | Set to `1` to show the GitHub sign-in button |
+
+**Runtime secrets** (`npx wrangler secret put <NAME>`):
+
+| Secret | Purpose |
+|--------|---------|
+| `AUTH_SECRET` | Auth.js session JWT/cookie encryption. Generate: `openssl rand -base64 32` |
+| `JWT_SECRET` | Must match the backend `JWT_SECRET` exactly |
+| `AUTH_SHARED_SECRET` | Must match the backend `AUTH_SHARED_SECRET` exactly |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth (optional) |
+| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth (optional) |
+
+### Deploy
+
+```bash
+# 1. Fill in build-time vars
 cp .env.production.example .env.production
 $EDITOR .env.production   # set NEXT_PUBLIC_API_URL etc.
 
-# 2. set Wrangler secrets (once per environment)
+# 2. Set Wrangler secrets (once per environment)
 npx wrangler secret put AUTH_SECRET
-npx wrangler secret put BACKEND_JWT_SECRET
+npx wrangler secret put JWT_SECRET
 npx wrangler secret put AUTH_SHARED_SECRET
-# (optional)
+# Optional OAuth
 npx wrangler secret put AUTH_GOOGLE_ID
 npx wrangler secret put AUTH_GOOGLE_SECRET
 npx wrangler secret put AUTH_GITHUB_ID
 npx wrangler secret put AUTH_GITHUB_SECRET
 
-# 3. deploy
+# 3. Deploy
 npm run deploy
 ```
 
-`npm run deploy` runs `opennextjs-cloudflare build && opennextjs-cloudflare deploy`. The build calls `next build`, which loads `.env.production`, then OpenNext bundles the worker and uploads it.
+`npm run deploy` runs `opennextjs-cloudflare build && opennextjs-cloudflare deploy`.
+
+---
+
+## Local development
+
+```bash
+# Backend
+cd specfit-api
+bun install
+cp .dev.vars.example .dev.vars   # fill in secrets
+wrangler d1 migrations apply specfit --local
+bun run dev                       # → http://localhost:8787
+
+# Frontend
+cd web-client
+npm install
+cp .env.example .env.local        # set NEXT_PUBLIC_API_URL=http://localhost:8787
+npm run dev                       # → http://localhost:3000
+```
+
+---
 
 ## Custom domain
 
-Two options:
-
-**A. Wrangler config** — edit `wrangler.jsonc`, add under the relevant env:
+**A. Wrangler config** — add to `wrangler.jsonc`:
 
 ```jsonc
 "routes": [
@@ -106,29 +138,38 @@ Two options:
 ]
 ```
 
-Then `npm run deploy -- --env production`.
+Then deploy with the relevant `--env` flag.
 
 **B. Dashboard** — Workers & Pages → your Worker → **Triggers → Add Custom Domain**.
 
 The zone must already be on your Cloudflare account.
 
+---
+
 ## CI/CD via Workers Builds
 
-Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/workers/ci-cd/builds/) and set:
+Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/workers/ci-cd/builds/).
 
-- **Build command**: `npm run deploy`
-- **Build directory**: `web-client/`
-- **Build variables**: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, `NEXT_PUBLIC_AUTH_GITHUB_ENABLED`.
-- **Secrets**: `AUTH_SECRET`, `BACKEND_JWT_SECRET`, `AUTH_SHARED_SECRET`, plus any OAuth secrets.
+**Backend** (`specfit-api/`):
+- Build command: `bun run deploy`
+- Build directory: `specfit-api/`
+- Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`, `BRAVE_API_KEY`
+
+**Frontend** (`web-client/`):
+- Build command: `npm run deploy`
+- Build directory: `web-client/`
+- Build variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, `NEXT_PUBLIC_AUTH_GITHUB_ENABLED`
+- Secrets: `AUTH_SECRET`, `JWT_SECRET`, `AUTH_SHARED_SECRET`, plus any OAuth secrets
+
+---
 
 ## Verifying
 
 After deploy, hit:
 
 - `https://<host>/` → redirects to `/login` if not signed in, otherwise `/applications`.
+- `GET https://<api-host>/health` → `{"status":"ok"}`.
 - `/register` → submit a real email → Resend mail arrives → click verify → `/login?verified=1`.
-- `/login` → enter creds → land on `/applications` with 20 seeded demo rows (only for the `samuelrubenscontato@gmail.com` account).
+- `/login` → enter creds → land on `/applications`.
 - Network tab → backend requests carry `Authorization: Bearer <jwt>`.
 - Hit the daily token cap → next `/match` returns `429 DAILY_TOKEN_LIMIT`.
-
-If you see `Failed to fetch`, check `CORS_ORIGINS` on the backend and confirm `NEXT_PUBLIC_API_URL` was baked into the build.
