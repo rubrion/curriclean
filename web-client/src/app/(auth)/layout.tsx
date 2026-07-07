@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 							<path d="M12 75 V102 L60 130 L108 102 V55 L85 68 V93 L60 108 L35 93 V89 L12 75Z" />
 						</g>
 					</svg>
-					<span className="text-lg font-semibold tracking-tight">SpecFit</span>
+					<span className="text-lg font-semibold tracking-tight">CurriClean</span>
 				</Link>
 				<main className="flex flex-1 flex-col">{children}</main>
 			</div>

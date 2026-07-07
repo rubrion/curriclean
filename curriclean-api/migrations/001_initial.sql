@@ -1,4 +1,4 @@
--- SpecFit D1 SQLite schema
+-- CurriClean D1 SQLite schema
 -- Converted from PostgreSQL schema_dump.sql
 -- Types: uuid→TEXT, timestamptz→TEXT (ISO8601), date→TEXT (YYYY-MM-DD),
 --        jsonb→TEXT, numeric→REAL, enums→TEXT CHECK

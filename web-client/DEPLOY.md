@@ -1,10 +1,10 @@
-# Deploying SpecFit (Cloudflare Workers)
+# Deploying CurriClean (Cloudflare Workers)
 
-Both the backend (`specfit-api/`) and the web client (`web-client/`) deploy to Cloudflare Workers. There is no Railway or external server.
+Both the backend (`curriclean-api/`) and the web client (`web-client/`) deploy to Cloudflare Workers. There is no Railway or external server.
 
 ---
 
-## Backend (`specfit-api/`)
+## Backend (`curriclean-api/`)
 
 ### One-time setup
 
@@ -17,15 +17,15 @@ Both the backend (`specfit-api/`) and the web client (`web-client/`) deploy to C
 2. **Create Cloudflare resources** (skip if already provisioned):
 
    ```bash
-   cd specfit-api
-   wrangler d1 create specfit                   # copy database_id into wrangler.jsonc
-   wrangler kv namespace create specfit-budget-kv  # copy id into wrangler.jsonc
+   cd curriclean-api
+   wrangler d1 create curriclean                   # copy database_id into wrangler.jsonc
+   wrangler kv namespace create curriclean-budget-kv  # copy id into wrangler.jsonc
    ```
 
 3. **Apply the schema:**
 
    ```bash
-   wrangler d1 migrations apply specfit --remote
+   wrangler d1 migrations apply curriclean --remote
    ```
 
 4. **Set secrets:**
@@ -48,16 +48,16 @@ Both the backend (`specfit-api/`) and the web client (`web-client/`) deploy to C
 ### Deploy
 
 ```bash
-cd specfit-api
+cd curriclean-api
 bun run deploy
 ```
 
 ### Future schema migrations
 
-Add a new `.sql` file to `specfit-api/migrations/` using `NNN_description.sql` naming, then:
+Add a new `.sql` file to `curriclean-api/migrations/` using `NNN_description.sql` naming, then:
 
 ```bash
-wrangler d1 migrations apply specfit --remote
+wrangler d1 migrations apply curriclean --remote
 ```
 
 ---
@@ -70,7 +70,7 @@ wrangler d1 migrations apply specfit --remote
 
 | Variable | Notes |
 |----------|-------|
-| `NEXT_PUBLIC_API_URL` | Backend Worker URL, e.g. `https://specfit-api.<sub>.workers.dev` |
+| `NEXT_PUBLIC_API_URL` | Backend Worker URL, e.g. `https://curriclean-api.<sub>.workers.dev` |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Set to `1` to show the Google sign-in button |
 | `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | Set to `1` to show the GitHub sign-in button |
 
@@ -113,10 +113,10 @@ npm run deploy
 
 ```bash
 # Backend
-cd specfit-api
+cd curriclean-api
 bun install
 cp .dev.vars.example .dev.vars   # fill in secrets
-wrangler d1 migrations apply specfit --local
+wrangler d1 migrations apply curriclean --local
 bun run dev                       # → http://localhost:8787
 
 # Frontend
@@ -134,7 +134,7 @@ npm run dev                       # → http://localhost:3000
 
 ```jsonc
 "routes": [
-  { "pattern": "specfit.example.com", "custom_domain": true }
+  { "pattern": "curriclean.example.com", "custom_domain": true }
 ]
 ```
 
@@ -150,9 +150,9 @@ The zone must already be on your Cloudflare account.
 
 Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/workers/ci-cd/builds/).
 
-**Backend** (`specfit-api/`):
+**Backend** (`curriclean-api/`):
 - Build command: `bun run deploy`
-- Build directory: `specfit-api/`
+- Build directory: `curriclean-api/`
 - Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`, `BRAVE_API_KEY`
 
 **Frontend** (`web-client/`):

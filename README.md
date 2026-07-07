@@ -1,4 +1,4 @@
-# SpecFit
+# CurriClean
 
 Open-source job application tracker with LLM-powered CV matching.
 
@@ -26,7 +26,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 
 ## Stack
 
-### Backend (`specfit-api/`)
+### Backend (`curriclean-api/`)
 
 - **Language**: TypeScript (strict)
 - **Framework**: [Hono](https://hono.dev)
@@ -112,10 +112,10 @@ See [environment-variables.md](environment-variables.md) for the full reference.
 
 ```bash
 # Backend
-cd specfit-api
+cd curriclean-api
 bun install
 cp .dev.vars.example .dev.vars   # fill in secrets
-wrangler d1 migrations apply specfit --local
+wrangler d1 migrations apply curriclean --local
 bun run dev                       # → http://localhost:8787
 
 # Frontend
@@ -131,8 +131,8 @@ See [deployment.md](deployment.md) for the full guide.
 
 ```bash
 # Backend
-cd specfit-api
-wrangler d1 migrations apply specfit --remote
+cd curriclean-api
+wrangler d1 migrations apply curriclean --remote
 bun run deploy
 
 # Frontend

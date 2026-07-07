@@ -39,7 +39,7 @@ export function Header() {
 							<path d="M12 75 V102 L60 130 L108 102 V55 L85 68 V93 L60 108 L35 93 V89 L12 75Z" />
 						</g>
 					</svg>
-					<span className="truncate text-lg font-semibold tracking-tight">SpecFit</span>
+					<span className="truncate text-lg font-semibold tracking-tight">CurriClean</span>
 				</Link>
 
 				<nav className="hidden items-center gap-4 text-sm md:flex">

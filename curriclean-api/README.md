@@ -1,6 +1,6 @@
-# specfit-api
+# curriclean-api
 
-Cloudflare Workers backend for **SpecFit** — an open-source job application tracker with LLM-powered CV matching.
+Cloudflare Workers backend for **CurriClean** — an open-source job application tracker with LLM-powered CV matching.
 
 Built with [Hono](https://hono.dev), [Cloudflare D1](https://developers.cloudflare.com/d1/), [Workers KV](https://developers.cloudflare.com/kv/), and [Workers AI](https://developers.cloudflare.com/workers-ai/).
 
@@ -38,12 +38,12 @@ cp .dev.vars.example .dev.vars
 
 ```bash
 # Create D1 database
-wrangler d1 create specfit
+wrangler d1 create curriclean
 
 # Copy the returned database_id into wrangler.jsonc → d1_databases[0].database_id
 
-# Create KV namespace (named with specfit prefix for dashboard clarity)
-wrangler kv namespace create specfit-budget-kv
+# Create KV namespace (named with curriclean prefix for dashboard clarity)
+wrangler kv namespace create curriclean-budget-kv
 
 # Copy the returned id into wrangler.jsonc → kv_namespaces[0].id
 ```
@@ -52,10 +52,10 @@ wrangler kv namespace create specfit-budget-kv
 
 ```bash
 # Local dev (creates a local SQLite file)
-wrangler d1 migrations apply specfit --local
+wrangler d1 migrations apply curriclean --local
 
 # Remote (production D1)
-wrangler d1 migrations apply specfit --remote
+wrangler d1 migrations apply curriclean --remote
 ```
 
 ### 5. Run locally

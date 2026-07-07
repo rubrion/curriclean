@@ -1,6 +1,6 @@
 # Environment Variables
 
-## Backend (`specfit-api/`)
+## Backend (`curriclean-api/`)
 
 Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wrangler.jsonc → vars` and can be committed.
 
@@ -28,8 +28,8 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `DB` | D1 | Primary SQLite database (`specfit`) |
-| `BUDGET_KV` | KV | Daily token budget cache (`specfit-budget-kv`) |
+| `DB` | D1 | Primary SQLite database (`curriclean`) |
+| `BUDGET_KV` | KV | Daily token budget cache (`curriclean-budget-kv`) |
 | `AI` | Workers AI | LLM inference — no key needed |
 
 ---

@@ -29,9 +29,9 @@ export async function sendVerifyEmail({
   const { error } = await resend.emails.send({
     from,
     to,
-    subject: "Verify your SpecFit email",
+    subject: "Verify your CurriClean email",
     html: `
-      <p>Welcome to SpecFit!</p>
+      <p>Welcome to CurriClean!</p>
       <p>Please verify your email address by clicking the link below. This link expires in 1 hour.</p>
       <p><a href="${link}">${link}</a></p>
       <p>If you did not create an account, you can safely ignore this email.</p>
@@ -56,9 +56,9 @@ export async function sendResetEmail({
   const { error } = await resend.emails.send({
     from,
     to,
-    subject: "Reset your SpecFit password",
+    subject: "Reset your CurriClean password",
     html: `
-      <p>We received a request to reset your SpecFit password.</p>
+      <p>We received a request to reset your CurriClean password.</p>
       <p>Click the link below to choose a new password. This link expires in 1 hour.</p>
       <p><a href="${link}">${link}</a></p>
       <p>If you did not request a password reset, you can safely ignore this email.</p>

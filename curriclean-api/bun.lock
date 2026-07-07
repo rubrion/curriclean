@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "specfit-api",
+      "name": "curriclean-api",
       "dependencies": {
         "bcryptjs": "^3.0.3",
         "hono": "^4.12.23",

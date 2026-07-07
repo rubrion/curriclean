@@ -6,7 +6,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "specfit",
+	"name": "curriclean",
 	"main": ".open-next/worker.js",
 	"compatibility_date": "2026-05-21",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -23,7 +23,7 @@
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "specfit"
+			"service": "curriclean"
 		}
 	],
 
@@ -54,17 +54,17 @@
 	 */
 	"env": {
 		"production": {
-			"name": "specfit",
+			"name": "curriclean",
 			"vars": {},
 			"observability": {
 				"enabled": true
 			},
 			"routes": [
-				{ "pattern": "specfit.rubrion.ai", "custom_domain": true }
+				{ "pattern": "curriclean.rubrion.ai", "custom_domain": true }
 			]
 		},
 		"staging": {
-			"name": "specfit-staging",
+			"name": "curriclean-staging",
 			"vars": {},
 			"observability": {
 				"enabled": true

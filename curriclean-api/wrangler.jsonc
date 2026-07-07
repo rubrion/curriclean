@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "specfit-api",
+	"name": "curriclean-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-06-01",
 	"compatibility_flags": ["nodejs_compat"],
@@ -13,21 +13,21 @@
 
 	/**
 	 * D1 SQLite database — primary datastore
-	 * Create: wrangler d1 create specfit
-	 * Migrate: wrangler d1 migrations apply specfit --remote
+	 * Create: wrangler d1 create curriclean
+	 * Migrate: wrangler d1 migrations apply curriclean --remote
 	 */
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "specfit",
-			"database_id": "72fdd235-8569-4d07-9067-69de4d0099fd",
+			"database_name": "curriclean",
+			"database_id": "8b9feee0-7564-4b9d-83dd-9aed0080e2f7",
 			"migrations_dir": "migrations"
 		}
 	],
 
 	/**
 	 * KV namespace — daily token budget cache (KV-first, D1 authoritative)
-	 * Create: wrangler kv namespace create specfit-budget-kv
+	 * Create: wrangler kv namespace create curriclean-budget-kv
 	 */
 	"kv_namespaces": [
 		{
@@ -57,8 +57,8 @@
 	"vars": {
 		"DAILY_TOKEN_BUDGET": "50000",
 		"CV_PDF_MAX_BYTES": "5242880",
-		"FRONTEND_URL": "https://specfit.rubrion.ai",
-		"EMAIL_FROM": "SpecFit <specfit@rubrion.ai>",
+		"FRONTEND_URL": "https://curriclean.rubrion.ai",
+		"EMAIL_FROM": "CurriClean <curriclean@rubrion.ai>",
 		"OPENROUTER_MODEL": "openai/gpt-4o-mini",
 		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1"
 	}

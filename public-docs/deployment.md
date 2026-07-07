@@ -1,19 +1,19 @@
 # Deployment
 
-## Backend — Cloudflare Workers (`specfit-api/`)
+## Backend — Cloudflare Workers (`curriclean-api/`)
 
 ### First-time setup
 
 ```sh
-cd specfit-api
+cd curriclean-api
 
 # 1. Create Cloudflare resources (skip if already provisioned)
-wrangler d1 create specfit
-wrangler kv namespace create specfit-budget-kv
+wrangler d1 create curriclean
+wrangler kv namespace create curriclean-budget-kv
 # Copy the returned IDs into wrangler.jsonc
 
 # 2. Apply database migrations
-wrangler d1 migrations apply specfit --remote
+wrangler d1 migrations apply curriclean --remote
 
 # 3. Set secrets
 wrangler secret put JWT_SECRET
@@ -32,10 +32,10 @@ bun run deploy
 
 ### Update schema (future migrations)
 
-Add a new `.sql` file to `specfit-api/migrations/` following the `NNN_description.sql` naming convention, then:
+Add a new `.sql` file to `curriclean-api/migrations/` following the `NNN_description.sql` naming convention, then:
 
 ```sh
-wrangler d1 migrations apply specfit --remote
+wrangler d1 migrations apply curriclean --remote
 ```
 
 ---
