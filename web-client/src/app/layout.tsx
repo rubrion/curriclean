@@ -17,6 +17,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "CurriClean",
 	description: "Open-source job application tracker with LLM-powered CV matching.",
+	icons: {
+		icon: [
+			{ url: "/favicon.ico", sizes: "any" },
+			{ url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+			{ url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+		],
+		apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+	},
+	manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -26,9 +35,6 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<head>
-				<link rel="icon" href="/favicon.svg" type="image/svg+xml"></link>
-			</head>
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<Providers>{children}</Providers>
 			</body>
