@@ -42,7 +42,7 @@ export default function NewApplicationPage() {
 				company: company.trim(),
 				title: title.trim(),
 				description,
-				applied_at: new Date(appliedAt).toISOString(),
+				applied_at: `${appliedAt}T12:00:00.000Z`, // midday UTC: the same calendar day in every timezone
 				status: statusValue,
 			});
 			toast.success("Application saved");
