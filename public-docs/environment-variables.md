@@ -11,7 +11,6 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `JWT_SECRET` | yes | HS256 signing secret for access tokens |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) | Server-to-server secret for `/auth/oauth-upsert`; must match the frontend |
 | `RESEND_API_KEY` | yes | Transactional email (verify + reset) |
-| `BRAVE_API_KEY` | no | Enables `/applications/{id}/suggested-profiles`; feature hidden if absent |
 | `STRIPE_SECRET_KEY` | no | Stripe API key; checkout is disabled unless all three Stripe values are set |
 | `STRIPE_WEBHOOK_SECRET` | no | Signing secret of the `/stripe/webhook` endpoint |
 

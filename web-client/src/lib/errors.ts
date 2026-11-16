@@ -31,14 +31,6 @@ const BY_CODE: Record<string, Omit<FriendlyError, "retryable">> = {
 		title: "Check your input",
 		message: "Some fields are missing or too short. CV text needs at least 50 characters.",
 	},
-	BRAVE_FETCH_FAILED: {
-		title: "Search unavailable",
-		message: "We couldn't reach the profile search right now. Please try again in a moment.",
-	},
-	BRAVE_NOT_CONFIGURED: {
-		title: "Profile search is off",
-		message: "Profile suggestions aren't enabled on this server.",
-	},
 	FILE_TOO_LARGE: { title: "PDF too large", message: "Please upload a PDF under 5 MB." },
 	INVALID_PDF: {
 		title: "Couldn't read that PDF",

@@ -38,8 +38,6 @@ function rowToResponse(row: ApplicationRow) {
     status: row.status,
     analysis: parseAnalysis(row.analysis),
     analysis_updated_at: row.analysis_updated_at,
-    suggested_profiles: row.suggested_profiles ? JSON.parse(row.suggested_profiles) : null,
-    suggested_profiles_updated_at: row.suggested_profiles_updated_at,
     tailored: row.tailored ? JSON.parse(row.tailored) : null,
     tailored_updated_at: row.tailored_updated_at,
     created_at: row.created_at,

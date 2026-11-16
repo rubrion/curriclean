@@ -10,7 +10,6 @@ import type {
 	ApplicationUpdate,
 	CvParseResponse,
 	MatchResponse,
-	SuggestedProfilesResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -178,20 +177,6 @@ export const api = {
 			throw new ApiError(res.status, `PDF parse failed: ${res.status}`, detail);
 		}
 		return (await res.json()) as CvParseResponse;
-	},
-
-	getSuggestedProfiles(
-		bearer: string | null | undefined,
-		applicationId: string,
-		opts: { refresh?: boolean; limit?: number } = {},
-	): Promise<SuggestedProfilesResponse> {
-		const refresh = opts.refresh ? "true" : "false";
-		const limit = opts.limit ?? 10;
-		return request<SuggestedProfilesResponse>(
-			`/applications/${applicationId}/suggested-profiles?refresh=${refresh}&limit=${limit}`,
-			bearer,
-			{ method: "POST" },
-		);
 	},
 };
 

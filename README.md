@@ -8,7 +8,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 
 - **CV PDF upload** — drop a PDF resume on the application detail page; the backend extracts text with `unpdf` and populates the CV field. 5 MB limit. Scanned-only PDFs are rejected.
 - **LLM match analysis** — paste/upload CV → structured fit score, strengths, gaps, interview questions. Results cached per `(model, job_description, cv_text)` hash; re-run with `?force=true`.
-- **Suggested LinkedIn profiles** — single button per application queries the [Brave Search API](https://brave.com/search/api/) for `site:linkedin.com/in/` hits matching the role + company. Results cached on the row; "Refresh" re-fetches and keeps the previous list if the new fetch fails.
+- **People to reach out to** — one-click LinkedIn and Google searches for people in the role, recruiters and employees at the company (no search API needed)
 - **Status tracking** — `saved` → `applied` → `interviewing` → `offer` / `rejected` / `withdrawn`.
 - **Authentication** — email + password (Resend-verified, bcrypt) and optional Google / GitHub OAuth. The backend issues HS256 bearer JWTs; the frontend uses Auth.js with the same secret.
 - **Per-user daily token budget** — every `/match` call deducts from a daily cap tracked in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`. Budget reads are KV-first for ~1 ms edge latency.
@@ -59,7 +59,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 | `users` | id (TEXT/UUID), email (unique), password_hash (nullable for OAuth), email_verified, name, image |
 | `verification_tokens` | identifier (`verify:<email>` or `reset:<email>`) + token + expires |
 | `token_usage` | user_id, day (TEXT, YYYY-MM-DD), tokens_in, tokens_out, runs — unique on (user_id, day) |
-| `applications` | id, user_id (FK), company, title, description, applied_at, status, analysis (JSON text), analysis_hash, suggested_profiles (JSON text), timestamps |
+| `applications` | id, user_id (FK), company, title, description, applied_at, status, analysis (JSON text) + analysis_hash, tailored (JSON text) + tailored_hash, timestamps |
 
 Status enum: `saved`, `applied`, `interviewing`, `offer`, `rejected`, `withdrawn`.
 
@@ -84,7 +84,6 @@ All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. 
 | `PATCH`| `/applications/:id` | Bearer | Partial update |
 | `DELETE`| `/applications/:id` | Bearer | Remove |
 | `POST` | `/applications/:id/match?force=false` | Bearer | Run LLM match. Returns cached unless `force=true`. Deducts from daily budget. |
-| `POST` | `/applications/:id/suggested-profiles?refresh=false` | Bearer | Cached LinkedIn profile hits via Brave Search. `refresh=true` re-fetches; falls back to cached on error. |
 | `POST` | `/cv/parse-pdf` (multipart) | Bearer | Extract plain text from a PDF resume. |
 
 ## Environment variables
@@ -98,7 +97,6 @@ See [environment-variables.md](environment-variables.md) for the full reference.
 | `JWT_SECRET` | yes |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) |
 | `RESEND_API_KEY` | yes |
-| `BRAVE_API_KEY` | no |
 | `STRIPE_SECRET_KEY` | no |
 | `STRIPE_WEBHOOK_SECRET` | no |
 

@@ -24,16 +24,10 @@ export interface Application {
 	status: ApplicationStatus;
 	analysis: MatchAnalysis | null;
 	analysis_updated_at: string | null;
-	suggested_profiles: StoredSuggestedProfiles | null;
-	suggested_profiles_updated_at: string | null;
 	tailored: TailoredCv | null;
 	tailored_updated_at: string | null;
 	created_at: string;
 	updated_at: string;
-}
-
-export interface StoredSuggestedProfiles {
-	hits: ProfileHit[];
 }
 
 export interface ApplicationCreate {
@@ -129,14 +123,4 @@ export interface PaymentStatus {
 
 export interface CvParseResponse {
 	text: string;
-}
-
-export interface ProfileHit {
-	url: string;
-	title: string;
-	description: string;
-}
-
-export interface SuggestedProfilesResponse {
-	hits: ProfileHit[];
 }

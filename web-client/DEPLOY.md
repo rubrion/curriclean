@@ -34,7 +34,6 @@ Both the backend (`curriclean-api/`) and the web client (`web-client/`) deploy t
    wrangler secret put JWT_SECRET           # HS256 signing secret for access tokens
    wrangler secret put AUTH_SHARED_SECRET   # X-Auth-Secret for OAuth upsert; must match the frontend
    wrangler secret put RESEND_API_KEY       # Resend transactional email
-   wrangler secret put BRAVE_API_KEY        # Brave Search (LinkedIn suggestions); optional
    # Optional: Stripe credit packs (checkout stays disabled without them)
    wrangler secret put STRIPE_SECRET_KEY
    wrangler secret put STRIPE_WEBHOOK_SECRET
@@ -152,7 +151,7 @@ Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/w
 **Backend** (`curriclean-api/`):
 - Build command: `bun run deploy`
 - Build directory: `curriclean-api/`
-- Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`, `BRAVE_API_KEY`
+- Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`
 
 **Frontend** (`web-client/`):
 - Build command: `npm run deploy`

@@ -16,7 +16,6 @@ Built with [Hono](https://hono.dev), [Cloudflare D1](https://developers.cloudfla
 | LLM inference | Workers AI (`@cf/google/gemma-4-26b-a4b-it`, JSON schema + zod) |
 | Payments | Stripe (prepaid credit packs) |
 | Email | Resend |
-| Profile search | Brave Search API |
 
 ---
 
@@ -76,7 +75,6 @@ bun run dev
 wrangler secret put JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
 wrangler secret put RESEND_API_KEY
-wrangler secret put BRAVE_API_KEY
 # Optional: Stripe credit packs (checkout stays disabled without them)
 wrangler secret put STRIPE_SECRET_KEY
 wrangler secret put STRIPE_WEBHOOK_SECRET
@@ -125,7 +123,6 @@ bun run cf-typegen
 | `PATCH` | `/applications/:id` | Update application |
 | `DELETE` | `/applications/:id` | Delete application |
 | `POST` | `/applications/:id/match` | Run LLM CV match |
-| `POST` | `/applications/:id/suggested-profiles` | LinkedIn profile suggestions |
 | `POST` | `/cv/parse-pdf` | Extract text from PDF CV |
 
 ---

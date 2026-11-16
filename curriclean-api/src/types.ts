@@ -30,8 +30,6 @@ export interface ApplicationRow {
   analysis: string | null;
   analysis_hash: string | null;
   analysis_updated_at: string | null;
-  suggested_profiles: string | null;
-  suggested_profiles_updated_at: string | null;
   tailored: string | null;
   tailored_hash: string | null;
   tailored_updated_at: string | null;
@@ -66,12 +64,6 @@ export interface UserOut {
   email_verified: boolean;
 }
 
-export interface ProfileHit {
-  url: string;
-  title: string;
-  description: string;
-}
-
 // ── Cloudflare bindings ───────────────────────────────────────────────────────
 
 export interface Env {
@@ -84,7 +76,6 @@ export interface Env {
   JWT_SECRET: string;
   AUTH_SHARED_SECRET: string;
   RESEND_API_KEY: string;
-  BRAVE_API_KEY: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
 

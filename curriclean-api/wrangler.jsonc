@@ -47,7 +47,6 @@
 	 *   JWT_SECRET          — HS256 signing secret for access tokens
 	 *   AUTH_SHARED_SECRET  — server-to-server OAuth upsert secret
 	 *   RESEND_API_KEY      — Resend transactional email
-	 *   BRAVE_API_KEY       — Brave Search API key (for profile suggestions)
 	 *   STRIPE_SECRET_KEY     — Stripe API key (credit packs)
 	 *   STRIPE_WEBHOOK_SECRET — signing secret of the /stripe/webhook endpoint
 	 */

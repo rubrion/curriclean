@@ -10,7 +10,7 @@ import { CompanyAvatar } from "@/components/CompanyAvatar";
 import { CvInput } from "@/components/CvInput";
 import { ErrorAlert } from "@/components/ErrorAlert";
 import { MatchPanel } from "@/components/MatchPanel";
-import { SuggestedProfilesPanel } from "@/components/SuggestedProfilesPanel";
+import { PeoplePanel } from "@/components/PeoplePanel";
 import { TailorPanel } from "@/components/TailorPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,11 +186,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 							/>
 						</TabsContent>
 						<TabsContent value="profiles">
-							<SuggestedProfilesPanel
-								applicationId={app.id}
-								initialHits={app.suggested_profiles?.hits ?? null}
-								initialUpdatedAt={app.suggested_profiles_updated_at}
-							/>
+							<PeoplePanel title={app.title} company={app.company} />
 						</TabsContent>
 					</Tabs>
 				</div>
