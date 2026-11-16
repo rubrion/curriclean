@@ -1,30 +1,22 @@
 # Stack
 
-## Backend (`backend/`)
+## Backend (`curriclean-api/`)
 
-- **Language**: Python 3.12
-- **Framework**: FastAPI (async)
-- **ORM**: SQLModel on SQLAlchemy 2 async
-- **Migrations**: Alembic (real migration files; no metadata auto-create)
-- **DB drivers**: `asyncpg` (runtime), `psycopg[binary]` (migrations)
-- **Auth**: own credentials store with `bcrypt` hashes, verify/reset tokens via `verification_tokens` table, OAuth upsert endpoint
-- **Bearer**: HS256 JWT (`PyJWT`) minted by the web client and verified by every request
-- **Email**: Resend SDK
-- **LLM client**: [`pydantic-ai`](https://ai.pydantic.dev) with `OpenAIModel` + `OpenAIProvider` pointed at OpenRouter
-- **Caching**: SHA256 hash of `(model, job_description, cv_text)` against `Application.analysis_hash`; bypass with `?force=true`
-- **Budget**: per-user daily token cap in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`
-- **Tracing**: Logfire instrumentation for FastAPI, SQLAlchemy, httpx, pydantic-ai
-- **Lint / typecheck / test**: `ruff`, `pyright`, `pytest`
-- **Container**: `python:3.12-slim`, `boot.sh` runs `alembic upgrade head` then `uvicorn`
+- **Runtime**: Cloudflare Workers, [Hono](https://hono.dev), TypeScript (strict)
+- **Database**: Cloudflare D1 (SQLite), raw prepared statements; SQL migrations in `migrations/`
+- **Cache**: Workers KV (`BUDGET_KV`) in front of the daily usage row
+- **LLM**: Workers AI binding (`@cf/google/gemma-4-26b-a4b-it`) with `response_format: json_schema`; every response is validated with **zod** (one retry on invalid output)
+- **Caching**: SHA-256 of `(model, job_description, cv_text)` stored on the application; same inputs return the saved result for free, `?force=true` regenerates
+- **Metering**: 3 free AI runs per user per day (`FREE_DAILY_RUNS`), then prepaid credits (analysis = 1, tailored CV = 2); a global `DAILY_TOKEN_BUDGET` caps abuse
+- **Payments**: Stripe embedded Checkout via the REST API (no SDK); signed webhook credits each pack once, refunds/disputes take credits back
+- **Auth**: hand-rolled HS256 JWT (WebCrypto) + bcrypt; verify/reset email via Resend
+- **PDF**: `unpdf` text extraction (CV text is never stored)
 
 ## Frontend (`web-client/`)
 
-- **Framework**: Next.js 16 (App Router)
-- **Runtime**: React 19
-- **Auth**: [Auth.js v5 (NextAuth)](https://authjs.dev) with Credentials + Google + GitHub providers, JWT session strategy
-- **Token mint**: `jose` HS256 — every session carries a 15-minute bearer that the FastAPI backend validates
-- **Styling**: Tailwind CSS v4
-- **Language**: TypeScript (strict)
-- **Deploy adapter**: `@opennextjs/cloudflare` → Cloudflare Workers
-- **Theme**: High-Contrast Minimalist (Deep Black `#09090B`, White `#FFFFFF`, Slate `#64748B`)
-- **Typography**: Geist Sans (UI) / Geist Mono (LLM output, metrics)
+- **Framework**: Next.js 16 (App Router), React 19, deployed with `@opennextjs/cloudflare`
+- **Auth**: Auth.js v5 (Credentials + optional Google/GitHub), backend JWT carried in the session
+- **Design system**: [shadcn/ui](https://ui.shadcn.com) (Radix, `radix-nova` style) on Tailwind CSS v4; charts with Recharts via shadcn `chart`
+- **Theme**: "cozy paper" — warm cream / warm charcoal surfaces, logo red `#C42524` as the only brand accent, sage / amber / terracotta for score tiers and statuses; light + dark via `next-themes`. Tokens live in `src/app/globals.css`
+- **Typography**: Geist Sans (UI), Geist Mono for small numerics
+- **Other**: `@dnd-kit/core` (pipeline board), `@stripe/react-stripe-js` (embedded Checkout), `sonner` toasts

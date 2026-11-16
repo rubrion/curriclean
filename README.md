@@ -20,7 +20,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 | Backend runtime | [Cloudflare Workers](https://workers.cloudflare.com) — Hono, TypeScript |
 | Database | [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) |
 | Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
-| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`llama-3.3-70b-instruct-fp8-fast`); optional [OpenRouter](https://openrouter.ai) fallback |
+| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`@cf/google/gemma-4-26b-a4b-it`) |
 | Frontend runtime | [Cloudflare Workers](https://workers.cloudflare.com) via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) (Next.js 16) |
 | Transactional email | [Resend](https://resend.com) (verify + password-reset) |
 
@@ -34,7 +34,8 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 - **Database**: Cloudflare D1 (SQLite) — plain SQL migrations, no ORM
 - **Auth**: own credentials store with `bcryptjs` hashes, verify/reset tokens, OAuth upsert endpoint; HS256 JWT issued by the Worker via Web Crypto
 - **Email**: Resend SDK
-- **LLM**: Cloudflare Workers AI with structured JSON output; OpenRouter as optional fallback
+- **LLM**: Cloudflare Workers AI with JSON-schema output validated by zod
+- **Billing**: free daily runs + prepaid Stripe credit packs
 - **Caching**: SHA-256 hash of `(model, job_description, cv_text)` against `analysis_hash`; bypass with `?force=true`
 - **Budget**: per-user daily token cap in `token_usage`; KV-first reads, D1 as source of truth; over-cap returns `429 DAILY_TOKEN_LIMIT`
 - **PDF parsing**: `unpdf` (edge-compatible, no Node.js fs dependency)
@@ -98,7 +99,8 @@ See [environment-variables.md](environment-variables.md) for the full reference.
 | `AUTH_SHARED_SECRET` | yes (if OAuth) |
 | `RESEND_API_KEY` | yes |
 | `BRAVE_API_KEY` | no |
-| `OPENROUTER_API_KEY` | no |
+| `STRIPE_SECRET_KEY` | no |
+| `STRIPE_WEBHOOK_SECRET` | no |
 
 ### Frontend secrets (set via `wrangler secret put`)
 

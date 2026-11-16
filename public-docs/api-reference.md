@@ -1,6 +1,6 @@
 # API Reference
 
-All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. `/auth/*` (except oauth-upsert) and `/healthz` are public.
+All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. `/auth/*` (except oauth-upsert) `/stripe/webhook` and `/health` are public.
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
@@ -15,7 +15,14 @@ All `/applications/*` and `/auth/oauth-upsert` require the relevant credential. 
 | `GET`  | `/applications/{id}` | Bearer | Detail (own only) |
 | `PATCH`| `/applications/{id}` | Bearer | Partial update |
 | `DELETE`| `/applications/{id}` | Bearer | Remove |
-| `POST` | `/applications/{id}/match?force=false` | Bearer | Run LLM match. Returns cached unless `force=true`. Deducts from daily budget. |
+| `GET`  | `/applications/stats` | Bearer | Dashboard numbers: counts by status, average score, score series, credits spent |
+| `POST` | `/applications/{id}/match?force=false` | Bearer | Fit analysis `{analysis, updated_at}`. Same CV returns the saved result (free) unless `force=true`. Uses a free run or 1 credit; `402 INSUFFICIENT_CREDITS` when neither covers it. |
+| `POST` | `/applications/{id}/tailor?force=false` | Bearer | Tailored CV suggestions `{tailored, updated_at}` targeting the analysis gaps (`409 ANALYSIS_REQUIRED` without one). Free run or 2 credits. |
 | `POST` | `/applications/{id}/suggested-profiles?refresh=false` | Bearer | Cached LinkedIn profile hits via Brave Search. `refresh=true` re-fetches. |
 | `POST` | `/cv/parse-pdf` (multipart) | Bearer | Extract plain text from a PDF resume. |
-| `GET`  | `/healthz` | — | Liveness |
+| `GET`  | `/billing` | Bearer | Credits, free runs left, prices, packs, whether checkout is enabled |
+| `POST` | `/billing/checkout` `{pack}` | Bearer | Opens an embedded Stripe Checkout session → `{client_secret, ref}` |
+| `GET`  | `/billing/payments/{ref}` | Bearer | Whether the webhook has credited a payment |
+| `GET`  | `/billing/history` | Bearer | Ledger: top-ups, refunds, spends |
+| `POST` | `/stripe/webhook` | Stripe signature | `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `charge.dispute.created` |
+| `GET`  | `/health` | — | Liveness |

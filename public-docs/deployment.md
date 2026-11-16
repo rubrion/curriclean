@@ -20,8 +20,9 @@ wrangler secret put JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
 wrangler secret put RESEND_API_KEY
 wrangler secret put BRAVE_API_KEY
-# Optional: only needed to use OpenRouter instead of Workers AI
-wrangler secret put OPENROUTER_API_KEY
+# Optional: Stripe credit packs (checkout stays disabled without them)
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
 ```
 
 ### Deploy

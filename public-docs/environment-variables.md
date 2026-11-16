@@ -12,17 +12,18 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `AUTH_SHARED_SECRET` | yes (if OAuth) | Server-to-server secret for `/auth/oauth-upsert`; must match the frontend |
 | `RESEND_API_KEY` | yes | Transactional email (verify + reset) |
 | `BRAVE_API_KEY` | no | Enables `/applications/{id}/suggested-profiles`; feature hidden if absent |
-| `OPENROUTER_API_KEY` | no | Use OpenRouter instead of Workers AI for LLM inference |
+| `STRIPE_SECRET_KEY` | no | Stripe API key; checkout is disabled unless all three Stripe values are set |
+| `STRIPE_WEBHOOK_SECRET` | no | Signing secret of the `/stripe/webhook` endpoint |
 
 ### Vars (non-sensitive, in `wrangler.jsonc`)
 
 | Key | Default | Notes |
 |-----|---------|-------|
-| `DAILY_TOKEN_BUDGET` | `50000` | Per-user daily token cap across all LLM calls |
+| `DAILY_TOKEN_BUDGET` | `50000` | Per-user daily token safety cap across all LLM calls |
 | `CV_PDF_MAX_BYTES` | `5242880` | Max PDF upload size (5 MB) |
 | `FRONTEND_URL` | `http://localhost:3000` | Origin used in verify/reset email links and CORS |
-| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Model used when `OPENROUTER_API_KEY` is set |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenRouter endpoint |
+| `FREE_DAILY_RUNS` | `3` | Free AI runs per user per day before credits are charged |
+| `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key (sent to the browser for embedded Checkout) |
 
 ### Cloudflare Bindings (in `wrangler.jsonc`)
 

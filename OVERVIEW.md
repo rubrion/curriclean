@@ -11,7 +11,7 @@ Paste a job description and your CV to receive a structured fit score, matched s
 | Backend | [Cloudflare Workers](https://workers.cloudflare.com) — Hono, TypeScript (`curriclean-api/`) |
 | Database | [Cloudflare D1](https://developers.cloudflare.com/d1/) (SQLite) |
 | Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
-| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (default `llama-3.3-70b-instruct-fp8-fast`); optional [OpenRouter](https://openrouter.ai) fallback |
+| LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`@cf/google/gemma-4-26b-a4b-it`) |
 | Frontend | [Cloudflare Workers](https://workers.cloudflare.com) via `@opennextjs/cloudflare` (Next.js 16) |
 | Email | [Resend](https://resend.com) |
 
