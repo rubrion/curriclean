@@ -59,7 +59,11 @@
 			"observability": {
 				"enabled": true
 			},
+			// curriclean.com is canonical; www and the old rubrion.ai host 301 to it
+			// (Cloudflare redirect rules), but stay attached so they resolve.
 			"routes": [
+				{ "pattern": "curriclean.com", "custom_domain": true },
+				{ "pattern": "www.curriclean.com", "custom_domain": true },
 				{ "pattern": "curriclean.rubrion.ai", "custom_domain": true }
 			]
 		},

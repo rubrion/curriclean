@@ -9,6 +9,15 @@
 	"compatibility_date": "2026-06-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": { "enabled": true },
+
+	/**
+	 * api.curriclean.com is canonical. The older hosts keep working for
+	 * webhooks and clients that still use them.
+	 */
+	"routes": [
+		{ "pattern": "api.curriclean.com", "custom_domain": true },
+		{ "pattern": "curriclean-api.rubrion.ai", "custom_domain": true }
+	],
 	"upload_source_maps": true,
 
 	/**
@@ -57,7 +66,7 @@
 	"vars": {
 		"DAILY_TOKEN_BUDGET": "50000",
 		"CV_PDF_MAX_BYTES": "5242880",
-		"FRONTEND_URL": "https://curriclean.rubrion.ai",
+		"FRONTEND_URL": "https://curriclean.com",
 		"EMAIL_FROM": "CurriClean <curriclean@rubrion.ai>",
 		"FREE_DAILY_CREDITS": "3",
 		"UNLIMITED_FOR": "samuel@rubrion.ai",

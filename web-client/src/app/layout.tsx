@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/Providers";
 import { getLocale } from "@/i18n/server";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,8 +17,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "CurriClean",
-	description: "Track job applications and see how well your CV fits each role.",
+	metadataBase: new URL(SITE_URL),
+	title: { default: "CurriClean", template: "%s · CurriClean" },
+	description: "AI CV match score, tailored CV suggestions and a simple job application tracker.",
+	applicationName: "CurriClean",
 	icons: {
 		icon: [
 			{ url: "/favicon.ico", sizes: "any" },
