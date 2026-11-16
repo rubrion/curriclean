@@ -70,7 +70,7 @@ wrangler d1 migrations apply curriclean --remote
 
 | Variable | Notes |
 |----------|-------|
-| `NEXT_PUBLIC_API_URL` | Backend Worker URL, e.g. `https://curriclean-api.<sub>.workers.dev` |
+| `NEXT_PUBLIC_API_URL` | Backend URL: `https://api.curriclean.com` in production |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Set to `1` to show the Google sign-in button |
 | `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | Set to `1` to show the GitHub sign-in button |
 
