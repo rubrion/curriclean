@@ -13,7 +13,8 @@ Built with [Hono](https://hono.dev), [Cloudflare D1](https://developers.cloudfla
 | Runtime | Cloudflare Workers (Hono) |
 | Database | D1 SQLite |
 | Token budget cache | Workers KV |
-| LLM inference | Workers AI (`llama-3.3-70b-instruct-fp8-fast`) |
+| LLM inference | Workers AI (`@cf/google/gemma-4-26b-a4b-it`, JSON schema + zod) |
+| Payments | Stripe (prepaid credit packs) |
 | Email | Resend |
 | Profile search | Brave Search API |
 
@@ -76,8 +77,9 @@ wrangler secret put JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
 wrangler secret put RESEND_API_KEY
 wrangler secret put BRAVE_API_KEY
-# Optional: only needed if using OpenRouter instead of Workers AI
-wrangler secret put OPENROUTER_API_KEY
+# Optional: Stripe credit packs (checkout stays disabled without them)
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
 ```
 
 ### Deploy
@@ -130,9 +132,9 @@ bun run cf-typegen
 
 ## LLM Strategy
 
-By default, Workers AI (`llama-3.3-70b-instruct-fp8-fast`) is used — no API key required.
+All inference runs on Workers AI (`@cf/google/gemma-4-26b-a4b-it`) through the `AI` binding — no API key required. Output is constrained with `response_format: json_schema` and validated with zod.
 
-To use OpenRouter instead (e.g. for GPT-4o), set `OPENROUTER_API_KEY` as a secret and optionally configure `OPENROUTER_MODEL` and `OPENROUTER_BASE_URL` in `wrangler.jsonc → vars`.
+Each user gets `FREE_DAILY_RUNS` (default 3) AI runs per day; after that, a match costs 1 credit and a tailored CV 2 credits. Credits are bought as Stripe packs (`curriclean_credit_5|10|25` price lookup keys) through embedded Checkout and credited by `/stripe/webhook`.
 
 ---
 

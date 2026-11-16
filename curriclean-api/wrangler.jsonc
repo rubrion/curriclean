@@ -37,7 +37,7 @@
 	],
 
 	/**
-	 * Workers AI binding — LLM inference (llama-3.3-70b-instruct)
+	 * Workers AI binding — LLM inference (@cf/google/gemma-4-26b-a4b-it)
 	 * No provisioning needed; just declare the binding.
 	 */
 	"ai": { "binding": "AI" },
@@ -48,7 +48,8 @@
 	 *   AUTH_SHARED_SECRET  — server-to-server OAuth upsert secret
 	 *   RESEND_API_KEY      — Resend transactional email
 	 *   BRAVE_API_KEY       — Brave Search API key (for profile suggestions)
-	 *   OPENROUTER_API_KEY  — (optional) fallback LLM via OpenRouter
+	 *   STRIPE_SECRET_KEY     — Stripe API key (credit packs)
+	 *   STRIPE_WEBHOOK_SECRET — signing secret of the /stripe/webhook endpoint
 	 */
 
 	/**
@@ -59,7 +60,7 @@
 		"CV_PDF_MAX_BYTES": "5242880",
 		"FRONTEND_URL": "https://curriclean.rubrion.ai",
 		"EMAIL_FROM": "CurriClean <curriclean@rubrion.ai>",
-		"OPENROUTER_MODEL": "openai/gpt-4o-mini",
-		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1"
+		"FREE_DAILY_RUNS": "3",
+		"STRIPE_PUBLISHABLE_KEY": "pk_test_51USlebQtpVVMufZy1dTBTIVsQyGJ9YJVbYn9DvISnBvlq1ibUMfgeFGIsRS5439uGIVPb6jp5qgoc77xwsHdXExu00TT5RghzL"
 	}
 }

@@ -32,6 +32,9 @@ export interface ApplicationRow {
   analysis_updated_at: string | null;
   suggested_profiles: string | null;
   suggested_profiles_updated_at: string | null;
+  tailored: string | null;
+  tailored_hash: string | null;
+  tailored_updated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +46,7 @@ export interface TokenUsageRow {
   tokens_in: number;
   tokens_out: number;
   cost_usd: number;
+  runs: number;
   created_at: string;
   updated_at: string;
 }
@@ -61,29 +65,6 @@ export interface UserOut {
   name: string | null;
   image: string | null;
   email_verified: boolean;
-}
-
-export interface MatchAnalysis {
-  score: number;
-  summary: string;
-  strengths: string[];
-  gaps: string[];
-  interview_questions: string[];
-}
-
-export interface MatchMetrics {
-  model: string;
-  tokens_in: number;
-  tokens_out: number;
-  latency_ms: number;
-  cost_estimate_usd: number;
-  cached: boolean;
-  cache_key: string;
-}
-
-export interface MatchResult {
-  analysis: MatchAnalysis;
-  metrics: MatchMetrics;
 }
 
 export interface ProfileHit {
@@ -105,15 +86,16 @@ export interface Env {
   AUTH_SHARED_SECRET: string;
   RESEND_API_KEY: string;
   BRAVE_API_KEY: string;
-  OPENROUTER_API_KEY?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 
   // Vars (non-sensitive, set in wrangler.jsonc)
   DAILY_TOKEN_BUDGET: string;
   CV_PDF_MAX_BYTES: string;
   FRONTEND_URL: string;
   EMAIL_FROM: string;
-  OPENROUTER_MODEL: string;
-  OPENROUTER_BASE_URL: string;
+  FREE_DAILY_RUNS?: string;
+  STRIPE_PUBLISHABLE_KEY?: string;
 }
 
 // ── Hono context variable types ───────────────────────────────────────────────

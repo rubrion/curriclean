@@ -2,105 +2,106 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { ApplicationRow, Env, HonoVariables } from "../types";
 import { jwtMiddleware } from "../lib/auth";
-import { runMatch, buildCacheKey, LlmError } from "../services/llm";
-import { assertUnderCap, recordUsage, BudgetExceededError } from "../services/budget";
+import { buildCacheKey, MatchAnalysis, runMatch, runTailor, TailoredCv } from "../services/llm";
+import { metered } from "../services/metering";
+import { parseAnalysis } from "./applications";
 
 const match = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 match.use("*", jwtMiddleware());
 
-const MatchRequestSchema = z.object({
+const CvRequestSchema = z.object({
   cv_text: z.string().min(50),
 });
+
+async function loadApp(env: Env, appId: string, userId: string) {
+  return env.DB.prepare("SELECT * FROM applications WHERE id = ? AND user_id = ?")
+    .bind(appId, userId)
+    .first<ApplicationRow>();
+}
+
+// ── POST /applications/:id/match ──────────────────────────────────────────────
 
 match.post("/:application_id/match", async (c) => {
   const userId = c.get("userId");
   const appId = c.req.param("application_id");
   const force = c.req.query("force") === "true";
 
-  const app = await c.env.DB.prepare(
-    "SELECT * FROM applications WHERE id = ? AND user_id = ?"
-  )
-    .bind(appId, userId)
-    .first<ApplicationRow>();
-
+  const app = await loadApp(c.env, appId, userId);
   if (!app) return c.json({ detail: "NOT_FOUND" }, 404);
 
-  const body = await c.req.json().catch(() => null);
-  const parsed = MatchRequestSchema.safeParse(body);
+  const parsed = CvRequestSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json({ detail: "VALIDATION_ERROR", errors: parsed.error.flatten() }, 422);
   }
-
   const { cv_text } = parsed.data;
-  const model = c.env.OPENROUTER_API_KEY
-    ? c.env.OPENROUTER_MODEL
-    : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+  const cacheKey = await buildCacheKey(app.description, cv_text);
 
-  // Check cache unless force=true
-  if (!force) {
-    const cacheKey = await buildCacheKey(model, app.description, cv_text);
-    if (app.analysis_hash === cacheKey && app.analysis) {
-      return c.json({
-        application_id: appId,
-        analysis: JSON.parse(app.analysis).analysis,
-        metrics: {
-          ...JSON.parse(app.analysis).metrics,
-          cached: true,
-          cache_key: cacheKey,
-        },
-        updated_at: app.analysis_updated_at,
-      });
-    }
+  // Same job + CV → return the stored analysis (free) unless force=true.
+  const stored = parseAnalysis(app.analysis);
+  if (!force && stored && app.analysis_hash === cacheKey) {
+    return c.json({ application_id: appId, analysis: stored, updated_at: app.analysis_updated_at });
   }
 
-  // Enforce daily token budget
-  try {
-    await assertUnderCap(c.env, userId);
-  } catch (err) {
-    if (err instanceof BudgetExceededError) {
-      return c.json({ detail: "DAILY_TOKEN_LIMIT" }, 429);
-    }
-    throw err;
-  }
+  const res = await metered<MatchAnalysis>(c.env, userId, "analysis", `Match: ${app.title} at ${app.company}`, () =>
+    runMatch(c.env, app.description, cv_text)
+  );
+  if (!res.ok) return c.json(res.body, res.status);
 
-  // Run LLM
-  let result: Awaited<ReturnType<typeof runMatch>>;
-  try {
-    result = await runMatch(c.env, app.description, cv_text);
-  } catch (err) {
-    if (err instanceof LlmError) {
-      return c.json({ detail: "LLM_ERROR", message: err.message }, 502);
-    }
-    throw err;
-  }
-
-  // Persist to D1
   const now = new Date().toISOString();
-  const stored = JSON.stringify({ analysis: result.analysis, metrics: result.metrics });
-
   await c.env.DB.prepare(
     `UPDATE applications
      SET analysis = ?, analysis_hash = ?, analysis_updated_at = ?, updated_at = ?
      WHERE id = ?`
   )
-    .bind(stored, result.metrics.cache_key, now, now, appId)
+    .bind(JSON.stringify(res.data), cacheKey, now, now, appId)
     .run();
 
-  // Record token usage (non-fatal)
-  recordUsage(
-    c.env,
-    userId,
-    result.metrics.tokens_in,
-    result.metrics.tokens_out,
-    result.metrics.cost_estimate_usd
-  ).catch(() => {});
+  return c.json({ application_id: appId, analysis: res.data, updated_at: now });
+});
 
-  return c.json({
-    application_id: appId,
-    analysis: result.analysis,
-    metrics: result.metrics,
-    updated_at: now,
-  });
+// ── POST /applications/:id/tailor ─────────────────────────────────────────────
+
+match.post("/:application_id/tailor", async (c) => {
+  const userId = c.get("userId");
+  const appId = c.req.param("application_id");
+  const force = c.req.query("force") === "true";
+
+  const app = await loadApp(c.env, appId, userId);
+  if (!app) return c.json({ detail: "NOT_FOUND" }, 404);
+
+  const parsed = CvRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json({ detail: "VALIDATION_ERROR", errors: parsed.error.flatten() }, 422);
+  }
+  const { cv_text } = parsed.data;
+
+  const analysis = parseAnalysis(app.analysis);
+  if (!analysis) return c.json({ detail: "ANALYSIS_REQUIRED" }, 409);
+
+  const cacheKey = await buildCacheKey("tailor", app.description, cv_text);
+  if (!force && app.tailored && app.tailored_hash === cacheKey) {
+    return c.json({
+      application_id: appId,
+      tailored: JSON.parse(app.tailored) as TailoredCv,
+      updated_at: app.tailored_updated_at,
+    });
+  }
+
+  const res = await metered<TailoredCv>(c.env, userId, "tailor", `Tailored CV: ${app.title} at ${app.company}`, () =>
+    runTailor(c.env, app.description, cv_text, analysis.gaps)
+  );
+  if (!res.ok) return c.json(res.body, res.status);
+
+  const now = new Date().toISOString();
+  await c.env.DB.prepare(
+    `UPDATE applications
+     SET tailored = ?, tailored_hash = ?, tailored_updated_at = ?, updated_at = ?
+     WHERE id = ?`
+  )
+    .bind(JSON.stringify(res.data), cacheKey, now, now, appId)
+    .run();
+
+  return c.json({ application_id: appId, tailored: res.data, updated_at: now });
 });
 
 export default match;

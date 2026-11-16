@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { ApplicationRow, ApplicationStatus, Env, HonoVariables } from "../types";
 import { jwtMiddleware } from "../lib/auth";
+import { MatchAnalysis } from "../services/llm";
 
 const applications = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 applications.use("*", jwtMiddleware());
@@ -17,6 +18,20 @@ const STATUS_VALUES: ApplicationStatus[] = [
 
 // ── Row → API response ────────────────────────────────────────────────────────
 
+/** Stored analysis JSON → MatchAnalysis (older rows wrapped it as { analysis, metrics }). */
+export function parseAnalysis(raw: string | null): MatchAnalysis | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return (v && typeof v === "object" && "analysis" in v ? v.analysis : v) as MatchAnalysis;
+  } catch {
+    return null;
+  }
+}
+
+// SQL expression for the stored score, for both storage shapes.
+const SCORE_SQL = "COALESCE(json_extract(analysis, '$.score'), json_extract(analysis, '$.analysis.score'))";
+
 function rowToResponse(row: ApplicationRow) {
   return {
     id: row.id,
@@ -25,11 +40,12 @@ function rowToResponse(row: ApplicationRow) {
     description: row.description,
     applied_at: row.applied_at,
     status: row.status,
-    analysis: row.analysis ? JSON.parse(row.analysis) : null,
-    analysis_hash: row.analysis_hash,
+    analysis: parseAnalysis(row.analysis),
     analysis_updated_at: row.analysis_updated_at,
     suggested_profiles: row.suggested_profiles ? JSON.parse(row.suggested_profiles) : null,
     suggested_profiles_updated_at: row.suggested_profiles_updated_at,
+    tailored: row.tailored ? JSON.parse(row.tailored) : null,
+    tailored_updated_at: row.tailored_updated_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -108,6 +124,43 @@ applications.get("/", async (c) => {
   }
 
   return c.json(rows.map(rowToResponse));
+});
+
+// ── GET /applications/stats (dashboard) ───────────────────────────────────────
+
+applications.get("/stats", async (c) => {
+  const userId = c.get("userId");
+  const [byStatus, scores, spent, runs] = await c.env.DB.batch([
+    c.env.DB.prepare(
+      "SELECT status, COUNT(*) AS count FROM applications WHERE user_id = ? GROUP BY status"
+    ).bind(userId),
+    c.env.DB.prepare(
+      `SELECT id, company, title, applied_at, ${SCORE_SQL} AS score
+       FROM applications WHERE user_id = ? AND analysis IS NOT NULL
+       ORDER BY applied_at ASC LIMIT 100`
+    ).bind(userId),
+    c.env.DB.prepare(
+      "SELECT COALESCE(-SUM(credits), 0) AS credits FROM ledger WHERE user_id = ? AND kind = 'spend'"
+    ).bind(userId),
+    c.env.DB.prepare(
+      "SELECT day, runs FROM token_usage WHERE user_id = ? ORDER BY day DESC LIMIT 30"
+    ).bind(userId),
+  ]);
+
+  const counts = Object.fromEntries(STATUS_VALUES.map((s) => [s, 0])) as Record<ApplicationStatus, number>;
+  for (const r of byStatus.results as { status: ApplicationStatus; count: number }[]) counts[r.status] = r.count;
+  const scored = (scores.results as { score: number | null }[]).filter((r) => typeof r.score === "number");
+  const avg = scored.length ? Math.round(scored.reduce((a, r) => a + (r.score ?? 0), 0) / scored.length) : null;
+
+  return c.json({
+    total: Object.values(counts).reduce((a, b) => a + b, 0),
+    by_status: counts,
+    average_score: avg,
+    analyzed: scored.length,
+    scores: scored,
+    credits_spent: (spent.results[0] as { credits: number } | undefined)?.credits ?? 0,
+    runs_by_day: (runs.results as { day: string; runs: number }[]).reverse(),
+  });
 });
 
 // ── GET /applications/:id ─────────────────────────────────────────────────────

@@ -6,6 +6,8 @@ import applicationRoutes from "./routes/applications";
 import matchRoutes from "./routes/match";
 import cvRoutes from "./routes/cv";
 import suggestionRoutes from "./routes/suggestions";
+import billingRoutes from "./routes/billing";
+import stripeRoutes from "./routes/stripe";
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -49,5 +51,7 @@ app.route("/applications", applicationRoutes);
 app.route("/applications", matchRoutes);
 app.route("/applications", suggestionRoutes);
 app.route("/cv", cvRoutes);
+app.route("/billing", billingRoutes);
+app.route("/stripe", stripeRoutes);
 
 export default app;
