@@ -92,7 +92,7 @@ export interface ApplicationStats {
 	analyzed: number;
 	scores: { id: string; company: string; title: string; applied_at: string; score: number }[];
 	credits_spent: number;
-	runs_by_day: { day: string; runs: number }[];
+	credits_by_day: { day: string; credits_used: number }[];
 }
 
 export interface CreditPack {
@@ -103,8 +103,8 @@ export interface CreditPack {
 
 export interface BillingInfo {
 	credits: number;
-	free_runs_left: number;
-	free_runs_daily: number;
+	daily_credit_left: number;
+	daily_credit: number;
 	prices: { analysis: number; tailor: number };
 	packs: CreditPack[];
 	checkout_enabled: boolean;

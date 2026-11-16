@@ -96,7 +96,7 @@ export default function DashboardPage() {
 					icon={CoinsIcon}
 					label="Credits"
 					value={billing?.credits}
-					hint={billing ? `${billing.free_runs_left} free runs left today` : undefined}
+					hint={billing ? `+ ${billing.daily_credit_left} free today` : undefined}
 					loading={!billing}
 					href="/billing"
 				/>

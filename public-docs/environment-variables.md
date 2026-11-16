@@ -22,7 +22,7 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `DAILY_TOKEN_BUDGET` | `50000` | Per-user daily token safety cap across all LLM calls |
 | `CV_PDF_MAX_BYTES` | `5242880` | Max PDF upload size (5 MB) |
 | `FRONTEND_URL` | `http://localhost:3000` | Origin used in verify/reset email links and CORS |
-| `FREE_DAILY_RUNS` | `3` | Free AI runs per user per day before credits are charged |
+| `FREE_DAILY_CREDITS` | `3` | Free credit per account per UTC day, spent before the prepaid wallet |
 | `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key (sent to the browser for embedded Checkout) |
 
 ### Cloudflare Bindings (in `wrangler.jsonc`)

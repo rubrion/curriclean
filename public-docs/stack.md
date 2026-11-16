@@ -7,7 +7,7 @@
 - **Cache**: Workers KV (`BUDGET_KV`) in front of the daily usage row
 - **LLM**: Workers AI binding (`@cf/google/gemma-4-26b-a4b-it`) with `response_format: json_schema`; every response is validated with **zod** (one retry on invalid output)
 - **Caching**: SHA-256 of `(model, job_description, cv_text)` stored on the application; same inputs return the saved result for free, `?force=true` regenerates
-- **Metering**: 3 free AI runs per user per day (`FREE_DAILY_RUNS`), then prepaid credits (analysis = 1, tailored CV = 2); a global `DAILY_TOKEN_BUDGET` caps abuse
+- **Metering**: like Rubry, every account gets a daily free credit (`FREE_DAILY_CREDITS`, default 3) that refills at midnight UTC. Actions are priced in credits (analysis = 1, tailored CV = 2); the free credit is spent first and the rest comes out of the prepaid wallet. A global `DAILY_TOKEN_BUDGET` caps abuse
 - **Payments**: Stripe embedded Checkout via the REST API (no SDK); signed webhook credits each pack once, refunds/disputes take credits back
 - **Auth**: hand-rolled HS256 JWT (WebCrypto) + bcrypt; verify/reset email via Resend
 - **PDF**: `unpdf` text extraction (CV text is never stored)

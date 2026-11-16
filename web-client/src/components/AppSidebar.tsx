@@ -126,14 +126,14 @@ function CreditsCard() {
 			<div className="flex items-center justify-between">
 				<span className="flex items-center gap-1.5 font-medium">
 					<SparklesIcon className="size-3.5 text-primary" />
-					Free runs today
+					Free credit today
 				</span>
 				<span className="font-mono text-xs tabular-nums text-muted-foreground">
-					{billing.free_runs_left}/{billing.free_runs_daily}
+					{billing.daily_credit_left}/{billing.daily_credit}
 				</span>
 			</div>
 			<Progress
-				value={(billing.free_runs_left / Math.max(1, billing.free_runs_daily)) * 100}
+				value={(billing.daily_credit_left / Math.max(1, billing.daily_credit)) * 100}
 				className="mt-2 h-1.5"
 			/>
 			<div className="mt-3 flex items-center justify-between">

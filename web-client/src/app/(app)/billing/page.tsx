@@ -168,15 +168,15 @@ function BillingInner() {
 					<CardHeader>
 						<CardDescription className="flex items-center gap-1.5">
 							<SparklesIcon className="size-3.5 text-primary" />
-							Free runs today
+							Free credit today
 						</CardDescription>
 						<CardTitle className="text-4xl tabular-nums">
 							{billing ? (
 								<>
-									{billing.free_runs_left}
+									{billing.daily_credit_left}
 									<span className="text-base font-normal text-muted-foreground">
 										{" "}
-										/ {billing.free_runs_daily}
+										/ {billing.daily_credit}
 									</span>
 								</>
 							) : (
@@ -185,9 +185,9 @@ function BillingInner() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-2">
-						<Progress value={billing ? (billing.free_runs_left / Math.max(1, billing.free_runs_daily)) * 100 : 0} />
+						<Progress value={billing ? (billing.daily_credit_left / Math.max(1, billing.daily_credit)) * 100 : 0} />
 						<span className="text-xs text-muted-foreground">
-							Free runs are used before credits and reset daily at midnight UTC.
+							Your free daily credit is spent first and refills every day at midnight UTC.
 						</span>
 					</CardContent>
 				</Card>
@@ -203,7 +203,7 @@ function BillingInner() {
 					<ErrorAlert
 						error={{
 							title: "Payments coming soon",
-							message: "Buying credits isn't enabled yet. Your free daily runs are still available.",
+							message: "Buying credits isn't enabled yet. Your free daily credit is still available.",
 							retryable: false,
 						}}
 					/>
@@ -280,7 +280,7 @@ function BillingInner() {
 					)}
 					{ledger && ledger.length === 0 && (
 						<p className="px-4 py-6 text-center text-sm text-muted-foreground">
-							No credit activity yet. Free runs don&apos;t show up here.
+							No activity yet. Spending from your free daily credit doesn&apos;t show up here.
 						</p>
 					)}
 					{ledger && ledger.length > 0 && (

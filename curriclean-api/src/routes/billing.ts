@@ -2,21 +2,21 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { Env, HonoVariables } from "../types";
 import { jwtMiddleware } from "../lib/auth";
-import { balance, freeDailyRuns, freeRunsLeft, Pack, PACKS, PRICES } from "../services/credits";
+import { creditLeft, dailyCredit, Pack, PACKS, PRICES } from "../services/credits";
 import { openCheckout, stripeConfigured } from "../services/stripe";
 
 const billing = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 billing.use("*", jwtMiddleware());
 
-// ── GET /billing — balance, free allowance, packs ─────────────────────────────
+// ── GET /billing — wallet, today's free credit, packs ─────────────────────────────
 
 billing.get("/", async (c) => {
   const userId = c.get("userId");
-  const [credits, freeLeft] = await Promise.all([balance(c.env, userId), freeRunsLeft(c.env, userId)]);
+  const { daily, wallet } = await creditLeft(c.env, userId);
   return c.json({
-    credits,
-    free_runs_left: freeLeft,
-    free_runs_daily: freeDailyRuns(c.env),
+    credits: wallet,
+    daily_credit_left: daily,
+    daily_credit: dailyCredit(c.env),
     prices: PRICES,
     packs: Object.entries(PACKS).map(([usd, n]) => ({ id: usd, usd: Number(usd), credits: n })),
     checkout_enabled: stripeConfigured(c.env),

@@ -45,7 +45,7 @@ export interface TokenUsageRow {
   day: string;
   tokens_in: number;
   tokens_out: number;
-  runs: number;
+  credits_used: number;
   created_at: string;
   updated_at: string;
 }
@@ -93,7 +93,7 @@ export interface Env {
   CV_PDF_MAX_BYTES: string;
   FRONTEND_URL: string;
   EMAIL_FROM: string;
-  FREE_DAILY_RUNS?: string;
+  FREE_DAILY_CREDITS?: string;
   STRIPE_PUBLISHABLE_KEY?: string;
 }
 

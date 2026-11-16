@@ -134,7 +134,7 @@ bun run cf-typegen
 
 All inference runs on Workers AI (`@cf/google/gemma-4-26b-a4b-it`) through the `AI` binding — no API key required. Output is constrained with `response_format: json_schema` and validated with zod.
 
-Each user gets `FREE_DAILY_RUNS` (default 3) AI runs per day; after that, a match costs 1 credit and a tailored CV 2 credits. Credits are bought as Stripe packs (`curriclean_credit_5|10|25` price lookup keys) through embedded Checkout and credited by `/stripe/webhook`.
+Each account gets a daily free credit (`FREE_DAILY_CREDITS`, default 3) that refills at midnight UTC. A match costs 1 credit and a tailored CV 2; the free credit is spent first and the rest comes out of the prepaid wallet. Credits are bought as Stripe packs (`curriclean_credit_5|10|25` price lookup keys) through embedded Checkout and credited by `/stripe/webhook`.
 
 ---
 

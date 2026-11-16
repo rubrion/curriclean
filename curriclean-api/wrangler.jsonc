@@ -60,7 +60,7 @@
 		"CV_PDF_MAX_BYTES": "5242880",
 		"FRONTEND_URL": "https://curriclean.rubrion.ai",
 		"EMAIL_FROM": "CurriClean <curriclean@rubrion.ai>",
-		"FREE_DAILY_RUNS": "3",
+		"FREE_DAILY_CREDITS": "3",
 		"STRIPE_PUBLISHABLE_KEY": "pk_test_51USlebQtpVVMufZy1dTBTIVsQyGJ9YJVbYn9DvISnBvlq1ibUMfgeFGIsRS5439uGIVPb6jp5qgoc77xwsHdXExu00TT5RghzL"
 	}
 }

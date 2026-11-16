@@ -12,7 +12,7 @@ export interface FriendlyError {
 const BY_CODE: Record<string, Omit<FriendlyError, "retryable">> = {
 	INSUFFICIENT_CREDITS: {
 		title: "You're out of credits",
-		message: "Today's free runs are used up. Top up your credits to keep going, or come back tomorrow.",
+		message: "Today's free credit is used up. Top up to keep going, or come back tomorrow when it refills.",
 		needsCredits: true,
 	},
 	DAILY_TOKEN_LIMIT: {

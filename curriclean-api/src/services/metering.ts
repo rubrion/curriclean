@@ -1,8 +1,9 @@
-// Wraps one AI action: checks the global token cap and that the user can pay
-// (free daily run or credits), runs it, then records usage and charges.
+// Wraps one AI action: checks the global token cap and that today's free credit
+// plus the wallet cover its price, runs it, then records usage and charges the
+// part the free credit didn't cover to the wallet.
 import { Env } from "../types";
 import { assertUnderCap, BudgetExceededError, recordUsage } from "./budget";
-import { Action, InsufficientCreditsError, quote, spend } from "./credits";
+import { Action, assertCanAfford, chargeOverflow, InsufficientCreditsError, PRICES } from "./credits";
 import { LlmError, LlmRun } from "./llm";
 
 export type Metered<T> =
@@ -16,10 +17,9 @@ export async function metered<T>(
   note: string,
   run: () => Promise<LlmRun<T>>
 ): Promise<Metered<T>> {
-  let mode: "free" | "credits";
   try {
     await assertUnderCap(env, userId);
-    mode = await quote(env, userId, action);
+    await assertCanAfford(env, userId, action);
   } catch (err) {
     if (err instanceof BudgetExceededError) {
       return { ok: false, status: 429, body: { detail: "DAILY_TOKEN_LIMIT" } };
@@ -45,9 +45,7 @@ export async function metered<T>(
     throw err;
   }
 
-  await recordUsage(env, userId, result.tokensIn, result.tokensOut);
-  if (mode === "credits") {
-    await spend(env, userId, action, `spend_${crypto.randomUUID()}`, note);
-  }
+  const after = await recordUsage(env, userId, result.tokensIn, result.tokensOut, PRICES[action]);
+  await chargeOverflow(env, userId, action, after, `spend_${crypto.randomUUID()}`, note);
   return { ok: true, data: result.data };
 }

@@ -139,7 +139,7 @@ applications.get("/stats", async (c) => {
       "SELECT COALESCE(-SUM(credits), 0) AS credits FROM ledger WHERE user_id = ? AND kind = 'spend'"
     ).bind(userId),
     c.env.DB.prepare(
-      "SELECT day, runs FROM token_usage WHERE user_id = ? ORDER BY day DESC LIMIT 30"
+      "SELECT day, credits_used FROM token_usage WHERE user_id = ? ORDER BY day DESC LIMIT 30"
     ).bind(userId),
   ]);
 
@@ -155,7 +155,7 @@ applications.get("/stats", async (c) => {
     analyzed: scored.length,
     scores: scored,
     credits_spent: (spent.results[0] as { credits: number } | undefined)?.credits ?? 0,
-    runs_by_day: (runs.results as { day: string; runs: number }[]).reverse(),
+    credits_by_day: (runs.results as { day: string; credits_used: number }[]).reverse(),
   });
 });
 
