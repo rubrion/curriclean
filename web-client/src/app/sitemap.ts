@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 	return [
 		{ url: `${SITE_URL}${LANDING_PATH.en}`, lastModified, changeFrequency: "monthly", priority: 1, alternates: { languages } },
 		{ url: `${SITE_URL}${LANDING_PATH.pt}`, lastModified, changeFrequency: "monthly", priority: 1, alternates: { languages } },
+		{ url: `${SITE_URL}/brand`, lastModified, changeFrequency: "yearly", priority: 0.3 },
 		{ url: `${SITE_URL}/register`, lastModified, changeFrequency: "yearly", priority: 0.5 },
 		{ url: `${SITE_URL}/login`, lastModified, changeFrequency: "yearly", priority: 0.3 },
 	];

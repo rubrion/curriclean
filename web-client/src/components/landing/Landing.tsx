@@ -277,6 +277,9 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
 						<LandingLangLink locale="pt" className="hover:text-foreground">
 							Português
 						</LandingLangLink>
+						<Link href="/brand" className="hover:text-foreground">
+							{t("landing.footer.brand")}
+						</Link>
 						<a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
 							{t("landing.footer.opensource")}
 						</a>
