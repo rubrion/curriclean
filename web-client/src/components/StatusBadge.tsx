@@ -1,8 +1,12 @@
+"use client";
+
+import { useI18n } from "@/i18n/client";
 import { STATUS_META } from "@/lib/format";
 import type { ApplicationStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function StatusBadge({ status, className }: { status: ApplicationStatus; className?: string }) {
+	const { t } = useI18n();
 	const meta = STATUS_META[status];
 	return (
 		<span
@@ -13,7 +17,7 @@ export function StatusBadge({ status, className }: { status: ApplicationStatus; 
 			)}
 		>
 			<span className={cn("size-1.5 rounded-full", meta.dot)} />
-			{meta.label}
+			{t(meta.label)}
 		</span>
 	);
 }

@@ -3,7 +3,7 @@
 // part the free credit didn't cover to the wallet.
 import { Env } from "../types";
 import { assertUnderCap, BudgetExceededError, recordUsage } from "./budget";
-import { Action, assertCanAfford, chargeOverflow, InsufficientCreditsError, PRICES } from "./credits";
+import { Action, assertCanAfford, chargeOverflow, InsufficientCreditsError, isUnlimited, PRICES } from "./credits";
 import { LlmError, LlmRun } from "./llm";
 
 export type Metered<T> =
@@ -17,9 +17,12 @@ export async function metered<T>(
   note: string,
   run: () => Promise<LlmRun<T>>
 ): Promise<Metered<T>> {
+  const unlimited = await isUnlimited(env, userId);
   try {
-    await assertUnderCap(env, userId);
-    await assertCanAfford(env, userId, action);
+    if (!unlimited) {
+      await assertUnderCap(env, userId);
+      await assertCanAfford(env, userId, action);
+    }
   } catch (err) {
     if (err instanceof BudgetExceededError) {
       return { ok: false, status: 429, body: { detail: "DAILY_TOKEN_LIMIT" } };
@@ -45,7 +48,8 @@ export async function metered<T>(
     throw err;
   }
 
-  const after = await recordUsage(env, userId, result.tokensIn, result.tokensOut, PRICES[action]);
-  await chargeOverflow(env, userId, action, after, `spend_${crypto.randomUUID()}`, note);
+  // Unlimited accounts still record tokens, but no credits.
+  const after = await recordUsage(env, userId, result.tokensIn, result.tokensOut, unlimited ? 0 : PRICES[action]);
+  if (!unlimited) await chargeOverflow(env, userId, action, after, `spend_${crypto.randomUUID()}`, note);
   return { ok: true, data: result.data };
 }

@@ -96,6 +96,7 @@ export interface CreditPack {
 }
 
 export interface BillingInfo {
+	unlimited: boolean;
 	credits: number;
 	daily_credit_left: number;
 	daily_credit: number;

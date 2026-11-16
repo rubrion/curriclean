@@ -30,6 +30,8 @@ import { useBilling } from "@/lib/billing";
 import { type FriendlyError, toFriendlyError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import type { CreditPack, LedgerEntry, PaymentStatus } from "@/lib/types";
+import { useI18n } from "@/i18n/client";
+import type { TKey } from "@/i18n/dictionaries";
 import { useApiQuery } from "@/lib/useApiQuery";
 import { useBearer } from "@/lib/useBearer";
 import { cn } from "@/lib/utils";
@@ -69,6 +71,7 @@ function BillingInner() {
 	const pathname = usePathname();
 	const params = useSearchParams();
 	const { billing, refresh } = useBilling();
+	const { t, intl } = useI18n();
 	const { data: ledger, error: ledgerError, reload: loadLedger } = useApiQuery<LedgerEntry[]>("ledger", (b) =>
 		api.getLedger(b),
 	);
@@ -89,21 +92,19 @@ function BillingInner() {
 			void waitForCredit(bearer, ref)
 				.then((p) => {
 					if (p) {
-						toast.success(`${p.credits} credits added`, { description: "Thanks for your purchase!" });
+						toast.success(t("billing.added", { n: p.credits }), { description: t("billing.thanks") });
 					} else {
-						toast.info("Payment received", {
-							description: "Your credits will appear in a moment. Refresh the page if they don't.",
-						});
+						toast.info(t("billing.received"), { description: t("billing.receivedDesc") });
 					}
 				})
-				.catch(() => toast.error("We couldn't confirm your payment yet. Refresh in a moment."))
+				.catch(() => toast.error(t("billing.confirmFailed")))
 				.finally(() => {
 					setConfirming(false);
 					refresh();
 					loadLedger();
 				});
 		},
-		[bearer, refresh, loadLedger],
+		[bearer, refresh, loadLedger, t],
 	);
 
 	// Coming back from a bank redirect: /billing?paid=pay_…
@@ -136,31 +137,31 @@ function BillingInner() {
 	return (
 		<div className="flex flex-col gap-6">
 			<PageHeader
-				title="Credits & billing"
-				description="Pay only for what you use. Credits never expire."
+				title={t("billing.title")}
+				description={t("billing.subtitle")}
 				className="pb-0"
 			/>
 
 			<div className="grid gap-4 md:grid-cols-3">
 				<Card className="md:col-span-2">
 					<CardHeader>
-						<CardDescription>Credit balance</CardDescription>
+						<CardDescription>{t("billing.balance")}</CardDescription>
 						<CardTitle className="flex items-baseline gap-2 text-4xl tabular-nums">
 							{billing ? billing.credits : <Skeleton className="h-10 w-20" />}
-							<span className="text-base font-normal text-muted-foreground">credits</span>
+							<span className="text-base font-normal text-muted-foreground">{t("billing.credits")}</span>
 							{confirming && (
 								<Badge variant="secondary" className="ml-2 gap-1.5 self-center">
 									<Spinner className="size-3" />
-									Confirming payment
+									{t("billing.confirming")}
 								</Badge>
 							)}
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-						<PriceRow label="Match analysis" credits={billing?.prices.analysis} />
-						<PriceRow label="Tailored CV" credits={billing?.prices.tailor} />
-						<PriceRow label="Re-opening a saved result" free />
-						<PriceRow label="People search" free />
+						<PriceRow label={t("billing.priceAnalysis")} credits={billing?.prices.analysis} />
+						<PriceRow label={t("billing.priceTailor")} credits={billing?.prices.tailor} />
+						<PriceRow label={t("billing.priceReopen")} free />
+						<PriceRow label={t("billing.pricePeople")} free />
 					</CardContent>
 				</Card>
 
@@ -168,10 +169,12 @@ function BillingInner() {
 					<CardHeader>
 						<CardDescription className="flex items-center gap-1.5">
 							<SparklesIcon className="size-3.5 text-primary" />
-							Free credit today
+							{billing?.unlimited ? t("billing.unlimitedTitle") : t("billing.freeCreditToday")}
 						</CardDescription>
 						<CardTitle className="text-4xl tabular-nums">
-							{billing ? (
+							{billing?.unlimited ? (
+								"∞"
+							) : billing ? (
 								<>
 									{billing.daily_credit_left}
 									<span className="text-base font-normal text-muted-foreground">
@@ -185,9 +188,13 @@ function BillingInner() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-2">
-						<Progress value={billing ? (billing.daily_credit_left / Math.max(1, billing.daily_credit)) * 100 : 0} />
+						{!billing?.unlimited && (
+							<Progress
+								value={billing ? (billing.daily_credit_left / Math.max(1, billing.daily_credit)) * 100 : 0}
+							/>
+						)}
 						<span className="text-xs text-muted-foreground">
-							Your free daily credit is spent first and refills every day at midnight UTC.
+							{billing?.unlimited ? t("billing.unlimitedHint") : t("billing.freeCreditHint")}
 						</span>
 					</CardContent>
 				</Card>
@@ -195,18 +202,12 @@ function BillingInner() {
 
 			<section className="flex flex-col gap-3">
 				<div>
-					<h2 className="text-lg font-semibold tracking-tight">Top up</h2>
-					<p className="text-sm text-muted-foreground">One-time purchase, securely processed by Stripe.</p>
+					<h2 className="text-lg font-semibold tracking-tight">{t("billing.topUp")}</h2>
+					<p className="text-sm text-muted-foreground">{t("billing.topUpDesc")}</p>
 				</div>
 				{checkoutError && <ErrorAlert error={checkoutError} />}
 				{billing && !billing.checkout_enabled && (
-					<ErrorAlert
-						error={{
-							title: "Payments coming soon",
-							message: "Buying credits isn't enabled yet. Your free daily credit is still available.",
-							retryable: false,
-						}}
-					/>
+					<ErrorAlert title={t("billing.soonTitle")} message={t("billing.soonMessage")} />
 				)}
 				<div className="grid gap-4 sm:grid-cols-3">
 					{(billing?.packs ?? []).map((p) => {
@@ -217,25 +218,30 @@ function BillingInner() {
 								className={cn("relative", featured && "ring-2 ring-primary/60 shadow-soft")}
 							>
 								{featured && (
-									<Badge className="absolute top-3 right-3 rounded-full">Best value</Badge>
+									<Badge className="absolute top-3 right-3 rounded-full">{t("billing.bestValue")}</Badge>
 								)}
 								<CardHeader>
-									<CardDescription>{p.credits} credits</CardDescription>
+									<CardDescription>{t("billing.packCredits", { n: p.credits })}</CardDescription>
 									<CardTitle className="text-3xl tabular-nums">${p.usd}</CardTitle>
 								</CardHeader>
 								<CardContent className="flex flex-col gap-1.5 text-sm text-muted-foreground">
 									<span className="flex items-center gap-2">
 										<CheckIcon className="size-4 text-success" />
-										{billing ? Math.floor(p.credits / billing.prices.analysis) : "—"} match analyses
+										{t("billing.packAnalyses", {
+											n: billing ? Math.floor(p.credits / billing.prices.analysis) : "—",
+										})}
 									</span>
 									<span className="flex items-center gap-2">
 										<CheckIcon className="size-4 text-success" />
-										or {billing ? Math.floor(p.credits / billing.prices.tailor) : "—"} tailored CVs
+										{t("billing.packTailors", {
+											n: billing ? Math.floor(p.credits / billing.prices.tailor) : "—",
+										})}
 									</span>
 									<span className="flex items-center gap-2">
 										<CheckIcon className="size-4 text-success" />
-										{((p.usd / p.credits) * 100).toFixed(1)}¢ per
-										credit
+										{t("billing.packPerCredit", {
+											n: ((p.usd / p.credits) * 100).toLocaleString(intl, { maximumFractionDigits: 1 }),
+										})}
 									</span>
 								</CardContent>
 								<CardFooter className="pt-2">
@@ -246,7 +252,7 @@ function BillingInner() {
 										onClick={() => buy(p)}
 									>
 										{opening === p.id ? <Spinner /> : <CoinsIcon />}
-										Buy {p.credits} credits
+										{t("billing.buy", { n: p.credits })}
 									</Button>
 								</CardFooter>
 							</Card>
@@ -261,9 +267,9 @@ function BillingInner() {
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<ReceiptIcon className="size-4 text-muted-foreground" />
-						Activity
+						{t("billing.activity")}
 					</CardTitle>
-					<CardDescription>Purchases, refunds and credits spent</CardDescription>
+					<CardDescription>{t("billing.activityDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="px-0">
 					{ledgerError && (
@@ -280,16 +286,16 @@ function BillingInner() {
 					)}
 					{ledger && ledger.length === 0 && (
 						<p className="px-4 py-6 text-center text-sm text-muted-foreground">
-							No activity yet. Spending from your free daily credit doesn&apos;t show up here.
+							{t("billing.noActivity")}
 						</p>
 					)}
 					{ledger && ledger.length > 0 && (
 						<Table>
 							<TableHeader>
 								<TableRow className="hover:bg-transparent">
-									<TableHead className="pl-4">Description</TableHead>
-									<TableHead className="hidden sm:table-cell">Date</TableHead>
-									<TableHead className="pr-4 text-right">Credits</TableHead>
+									<TableHead className="pl-4">{t("billing.colDescription")}</TableHead>
+									<TableHead className="hidden sm:table-cell">{t("billing.colDate")}</TableHead>
+									<TableHead className="pr-4 text-right">{t("billing.colCredits")}</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -298,11 +304,19 @@ function BillingInner() {
 										<TableCell className="pl-4">
 											<span className="flex items-center gap-2.5">
 												<LedgerIcon kind={l.kind} />
-												<span className="truncate">{l.note ?? KIND_LABEL[l.kind]}</span>
+												<span className="truncate">
+													{t(KIND_LABEL[l.kind])}
+													{l.kind === "spend" && l.note && (
+														<span className="text-muted-foreground">
+															{" · "}
+															{l.note.replace(/^(Match|Tailored CV): /, "")}
+														</span>
+													)}
+												</span>
 											</span>
 										</TableCell>
 										<TableCell className="hidden text-muted-foreground sm:table-cell">
-											{formatDateTime(l.created_at)}
+											{formatDateTime(l.created_at, intl)}
 										</TableCell>
 										<TableCell
 											className={cn(
@@ -323,8 +337,8 @@ function BillingInner() {
 			<Dialog open={checkout !== null} onOpenChange={(o) => !o && setCheckout(null)}>
 				<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
 					<DialogHeader>
-						<DialogTitle>Buy {checkout?.pack.credits} credits</DialogTitle>
-						<DialogDescription>${checkout?.pack.usd} one-time payment · receipt sent by email</DialogDescription>
+						<DialogTitle>{t("billing.dialogTitle", { n: checkout?.pack.credits ?? "" })}</DialogTitle>
+						<DialogDescription>{t("billing.dialogDesc", { usd: checkout?.pack.usd ?? "" })}</DialogDescription>
 					</DialogHeader>
 					{checkout && stripePromise && (
 						<div className="overflow-hidden rounded-lg">
@@ -351,10 +365,10 @@ function BillingInner() {
 	);
 }
 
-const KIND_LABEL: Record<LedgerEntry["kind"], string> = {
-	topup: "Credit pack",
-	refund: "Refund",
-	spend: "AI run",
+const KIND_LABEL: Record<LedgerEntry["kind"], TKey> = {
+	topup: "billing.kind.topup",
+	refund: "billing.kind.refund",
+	spend: "billing.kind.spend",
 };
 
 function LedgerIcon({ kind }: { kind: LedgerEntry["kind"] }) {
@@ -369,14 +383,15 @@ function LedgerIcon({ kind }: { kind: LedgerEntry["kind"] }) {
 }
 
 function PriceRow({ label, credits, free }: { label: string; credits?: number; free?: boolean }) {
+	const { t } = useI18n();
 	return (
 		<div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
 			<span>{label}</span>
 			<span className="font-medium tabular-nums">
 				{free ? (
-					<span className="text-success">Free</span>
+					<span className="text-success">{t("billing.free")}</span>
 				) : credits !== undefined ? (
-					`${credits} credit${credits === 1 ? "" : "s"}`
+					t(credits === 1 ? "cost.credits.one" : "cost.credits.other", { n: credits })
 				) : (
 					"—"
 				)}

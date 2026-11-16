@@ -1,3 +1,6 @@
+"use client";
+
+import { useI18n } from "@/i18n/client";
 import { scoreTier } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +16,7 @@ export function ScoreGauge({
 	className?: string;
 	showLabel?: boolean;
 }) {
+	const { t } = useI18n();
 	const tier = scoreTier(score);
 	const stroke = Math.max(6, Math.round(size / 13));
 	const r = (size - stroke) / 2;
@@ -41,7 +45,7 @@ export function ScoreGauge({
 					<span className="font-semibold tabular-nums tracking-tight" style={{ fontSize: size * 0.3 }}>
 						{score}
 					</span>
-					{size >= 100 && <span className="text-xs text-muted-foreground">out of 100</span>}
+					{size >= 100 && <span className="text-xs text-muted-foreground">{t("score.outOf100")}</span>}
 				</div>
 			</div>
 			{showLabel && (
@@ -49,7 +53,7 @@ export function ScoreGauge({
 					className="rounded-full px-2.5 py-0.5 text-xs font-medium"
 					style={{ color: tier.color, backgroundColor: tier.soft }}
 				>
-					{tier.label}
+					{t(tier.label)}
 				</span>
 			)}
 		</div>
@@ -58,12 +62,13 @@ export function ScoreGauge({
 
 /** Small inline score pill for lists and cards. */
 export function ScorePill({ score, className }: { score: number; className?: string }) {
+	const { t } = useI18n();
 	const tier = scoreTier(score);
 	return (
 		<span
 			className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums", className)}
 			style={{ color: tier.color, backgroundColor: tier.soft }}
-			title={tier.label}
+			title={t(tier.label)}
 		>
 			{score}%
 		</span>

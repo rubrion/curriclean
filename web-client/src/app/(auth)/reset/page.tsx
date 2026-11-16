@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { authApi, authErrorMessage } from "@/lib/authApi";
+import { useI18n } from "@/i18n/client";
+import { authApi, authErrorKey } from "@/lib/authApi";
 
 export default function ResetPage() {
 	return (
@@ -21,37 +22,38 @@ export default function ResetPage() {
 
 function ResetInner() {
 	const router = useRouter();
+	const { t } = useI18n();
 	const token = useSearchParams().get("token");
 	const [password, setPassword] = useState("");
 	const [confirm, setConfirm] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(
-		token ? null : "This reset link is incomplete. Open the link from your email again.",
+		token ? null : t("reset.incomplete"),
 	);
 
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
 		if (!token) return;
-		if (password.length < 8) return setError("Your password needs at least 8 characters.");
-		if (password !== confirm) return setError("The passwords don't match.");
+		if (password.length < 8) return setError(t("auth.tooShort"));
+		if (password !== confirm) return setError(t("auth.mismatch"));
 		setSubmitting(true);
 		try {
 			await authApi.reset(token, password);
 			router.push("/login?reset=1");
 		} catch (err) {
-			setError(authErrorMessage(err));
+			setError(t(authErrorKey(err)));
 			setSubmitting(false);
 		}
 	}
 
 	return (
 		<div className="flex flex-col gap-5">
-			<AuthHeading title="Choose a new password" />
+			<AuthHeading title={t("reset.title")} />
 			<form onSubmit={onSubmit}>
 				<FieldGroup>
 					<Field>
-						<FieldLabel htmlFor="password">New password</FieldLabel>
+						<FieldLabel htmlFor="password">{t("auth.newPassword")}</FieldLabel>
 						<Input
 							id="password"
 							type="password"
@@ -60,10 +62,10 @@ function ResetInner() {
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 						/>
-						<FieldDescription>At least 8 characters.</FieldDescription>
+						<FieldDescription>{t("auth.passwordHint")}</FieldDescription>
 					</Field>
 					<Field>
-						<FieldLabel htmlFor="confirm">Confirm password</FieldLabel>
+						<FieldLabel htmlFor="confirm">{t("auth.confirmPassword")}</FieldLabel>
 						<Input
 							id="confirm"
 							type="password"
@@ -76,13 +78,13 @@ function ResetInner() {
 					{error && <AuthNotice kind="error">{error}</AuthNotice>}
 					<Button type="submit" size="lg" disabled={submitting || !token} className="w-full">
 						{submitting && <Spinner />}
-						Update password
+						{t("reset.submit")}
 					</Button>
 				</FieldGroup>
 			</form>
 			<p className="text-center text-sm text-muted-foreground">
 				<Link href="/login" className="font-medium text-primary hover:underline">
-					Back to sign in
+					{t("auth.backToSignIn")}
 				</Link>
 			</p>
 		</div>

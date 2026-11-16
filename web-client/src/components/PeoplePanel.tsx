@@ -1,6 +1,9 @@
+"use client";
+
 import { BriefcaseIcon, ExternalLinkIcon, SearchIcon, UserRoundSearchIcon, UsersIcon } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/i18n/client";
 
 const linkedin = (keywords: string) =>
 	`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(keywords)}`;
@@ -12,32 +15,33 @@ const google = (query: string) => `https://www.google.com/search?q=${encodeURICo
  * own LinkedIn session, so they're current and complete.
  */
 export function PeoplePanel({ title, company }: { title: string; company: string }) {
+	const { t } = useI18n();
 	const searches = [
 		{
 			icon: UserRoundSearchIcon,
-			label: `${title} at ${company}`,
-			hint: "People doing this job there today — ask about the team",
+			label: t("people.role", { title, company }),
+			hint: t("people.roleHint"),
 			href: linkedin(`${title} ${company}`),
 			source: "LinkedIn",
 		},
 		{
 			icon: BriefcaseIcon,
-			label: `Recruiters at ${company}`,
-			hint: "Talent acquisition who might own this opening",
-			href: linkedin(`recruiter talent acquisition ${company}`),
+			label: t("people.recruiters", { company }),
+			hint: t("people.recruitersHint"),
+			href: linkedin(`${t("people.recruiterQuery")} ${company}`),
 			source: "LinkedIn",
 		},
 		{
 			icon: UsersIcon,
-			label: `Everyone at ${company}`,
-			hint: "Look for alumni, past colleagues or shared connections",
+			label: t("people.everyone", { company }),
+			hint: t("people.everyoneHint"),
 			href: linkedin(company),
 			source: "LinkedIn",
 		},
 		{
 			icon: SearchIcon,
-			label: `"${title}" "${company}" profiles`,
-			hint: "Public LinkedIn profiles via Google, no sign-in needed",
+			label: t("people.google", { title, company }),
+			hint: t("people.googleHint"),
 			href: google(`site:linkedin.com/in "${title}" "${company}"`),
 			source: "Google",
 		},
@@ -46,10 +50,8 @@ export function PeoplePanel({ title, company }: { title: string; company: string
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>People to reach out to</CardTitle>
-				<CardDescription>
-					A referral or a quick chat with someone on the team can beat a cold application.
-				</CardDescription>
+				<CardTitle>{t("people.title")}</CardTitle>
+				<CardDescription>{t("people.desc")}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<ul className="flex flex-col divide-y rounded-lg border">

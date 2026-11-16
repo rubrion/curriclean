@@ -21,7 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
-import { toFriendlyError } from "@/lib/errors";
+import { useI18n } from "@/i18n/client";
+import { errorKeys, toFriendlyError } from "@/lib/errors";
 import { formatDate, STATUS_META } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from "@/lib/types";
 import { useApiQuery } from "@/lib/useApiQuery";
@@ -37,6 +38,7 @@ export default function ApplicationsPage() {
 
 function ApplicationsInner() {
 	const bearer = useBearer();
+	const { t, intl } = useI18n();
 	const router = useRouter();
 	const pathname = usePathname();
 	const params = useSearchParams();
@@ -64,10 +66,10 @@ function ApplicationsInner() {
 		setItems(items.map((a) => (a.id === id ? { ...a, status } : a)));
 		try {
 			await api.updateApplication(bearer, id, { status });
-			toast.success(`Moved to ${STATUS_META[status].label}`);
+			toast.success(t("status.movedTo", { stage: t(STATUS_META[status].label) }));
 		} catch (e) {
 			setItems(prev);
-			toast.error(toFriendlyError(e).title);
+			toast.error(t(errorKeys(toFriendlyError(e)).title));
 		}
 	}
 
@@ -82,13 +84,17 @@ function ApplicationsInner() {
 	return (
 		<div className="flex flex-col gap-5">
 			<PageHeader
-				title="Applications"
-				description={items ? `${items.length} job${items.length === 1 ? "" : "s"} you're tracking` : "Loading…"}
+				title={t("apps.title")}
+				description={
+					items
+						? t(items.length === 1 ? "apps.count.one" : "apps.count.other", { n: items.length })
+						: t("common.loading")
+				}
 				actions={
 					<Button asChild>
 						<Link href="/applications/new">
 							<PlusIcon />
-							New application
+							{t("nav.newApplication")}
 						</Link>
 					</Button>
 				}
@@ -100,11 +106,11 @@ function ApplicationsInner() {
 					<TabsList>
 						<TabsTrigger value="table">
 							<ListIcon />
-							List
+							{t("apps.list")}
 						</TabsTrigger>
 						<TabsTrigger value="board">
 							<KanbanSquareIcon />
-							Board
+							{t("apps.board")}
 						</TabsTrigger>
 					</TabsList>
 				</Tabs>
@@ -113,7 +119,7 @@ function ApplicationsInner() {
 					<Input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
-						placeholder="Search role or company"
+						placeholder={t("apps.search")}
 						className="pl-8"
 					/>
 				</div>
@@ -123,10 +129,10 @@ function ApplicationsInner() {
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="all">All stages</SelectItem>
+							<SelectItem value="all">{t("apps.allStages")}</SelectItem>
 							{APPLICATION_STATUSES.map((s) => (
 								<SelectItem key={s} value={s}>
-									{STATUS_META[s].label}
+									{t(STATUS_META[s].label)}
 								</SelectItem>
 							))}
 						</SelectContent>
@@ -151,16 +157,14 @@ function ApplicationsInner() {
 							<EmptyMedia variant="icon">
 								<BriefcaseIcon />
 							</EmptyMedia>
-							<EmptyTitle>Start tracking your job search</EmptyTitle>
-							<EmptyDescription>
-								Save a job description, then let CurriClean score your CV against it.
-							</EmptyDescription>
+							<EmptyTitle>{t("apps.emptyTitle")}</EmptyTitle>
+							<EmptyDescription>{t("apps.emptyDesc")}</EmptyDescription>
 						</EmptyHeader>
 						<EmptyContent>
 							<Button asChild>
 								<Link href="/applications/new">
 									<PlusIcon />
-									Add application
+									{t("apps.add")}
 								</Link>
 							</Button>
 						</EmptyContent>
@@ -177,17 +181,17 @@ function ApplicationsInner() {
 					<Table>
 						<TableHeader>
 							<TableRow className="hover:bg-transparent">
-								<TableHead className="pl-4">Role</TableHead>
-								<TableHead className="hidden md:table-cell">Applied</TableHead>
-								<TableHead>Match</TableHead>
-								<TableHead className="pr-4 text-right">Stage</TableHead>
+								<TableHead className="pl-4">{t("apps.colRole")}</TableHead>
+								<TableHead className="hidden md:table-cell">{t("apps.colApplied")}</TableHead>
+								<TableHead>{t("apps.colMatch")}</TableHead>
+								<TableHead className="pr-4 text-right">{t("apps.colStage")}</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{filtered.length === 0 && (
 								<TableRow>
 									<TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-										No applications match your filters.
+										{t("apps.noMatches")}
 									</TableCell>
 								</TableRow>
 							)}
@@ -207,13 +211,13 @@ function ApplicationsInner() {
 										</Link>
 									</TableCell>
 									<TableCell className="hidden text-muted-foreground md:table-cell">
-										{formatDate(a.applied_at)}
+										{formatDate(a.applied_at, intl)}
 									</TableCell>
 									<TableCell>
 										{a.analysis ? (
 											<ScorePill score={a.analysis.score} />
 										) : (
-											<span className="text-xs text-muted-foreground">Not analyzed</span>
+											<span className="text-xs text-muted-foreground">{t("apps.notAnalyzed")}</span>
 										)}
 									</TableCell>
 									<TableCell className="pr-4 text-right">

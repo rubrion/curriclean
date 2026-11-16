@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n } from "@/i18n/client";
 import { authApi } from "@/lib/authApi";
 
 export default function ForgotPage() {
+	const { t } = useI18n();
 	const [email, setEmail] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
@@ -36,16 +38,11 @@ export default function ForgotPage() {
 					<MailIcon className="size-6" />
 				</span>
 				<AuthHeading
-					title="Check your inbox"
-					description={
-						<>
-							If an account exists for <span className="font-medium text-foreground">{email}</span>, a reset link is on
-							its way.
-						</>
-					}
+					title={t("auth.checkInbox")}
+					description={t("forgot.sent", { email })}
 				/>
 				<Button asChild variant="outline" className="w-full">
-					<Link href="/login">Back to sign in</Link>
+					<Link href="/login">{t("auth.backToSignIn")}</Link>
 				</Button>
 			</div>
 		);
@@ -53,11 +50,11 @@ export default function ForgotPage() {
 
 	return (
 		<div className="flex flex-col gap-5">
-			<AuthHeading title="Forgot your password?" description="Enter your email and we'll send you a reset link." />
+			<AuthHeading title={t("forgot.title")} description={t("forgot.subtitle")} />
 			<form onSubmit={onSubmit}>
 				<FieldGroup>
 					<Field>
-						<FieldLabel htmlFor="email">Email</FieldLabel>
+						<FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
 						<Input
 							id="email"
 							type="email"
@@ -65,19 +62,19 @@ export default function ForgotPage() {
 							required
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							placeholder="you@example.com"
+							placeholder={t("auth.emailPlaceholder")}
 						/>
 					</Field>
 					<Button type="submit" size="lg" disabled={submitting} className="w-full">
 						{submitting && <Spinner />}
-						Send reset link
+						{t("forgot.submit")}
 					</Button>
 				</FieldGroup>
 			</form>
 			<p className="text-center text-sm text-muted-foreground">
-				Remembered it?{" "}
+				{t("forgot.remembered")}{" "}
 				<Link href="/login" className="font-medium text-primary hover:underline">
-					Sign in
+					{t("register.signIn")}
 				</Link>
 			</p>
 		</div>

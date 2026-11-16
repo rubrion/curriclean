@@ -25,6 +25,7 @@ import { api } from "@/lib/api";
 import { useBilling } from "@/lib/billing";
 import { formatRelative, STATUS_META } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStats } from "@/lib/types";
+import { useI18n } from "@/i18n/client";
 import { useApiQuery } from "@/lib/useApiQuery";
 import { useSession } from "next-auth/react";
 
@@ -37,12 +38,12 @@ const STATUS_COLORS: Record<string, string> = {
 	withdrawn: "var(--border)",
 };
 
-const scoreConfig = { score: { label: "Match score", color: "var(--chart-1)" } } satisfies ChartConfig;
-const statusConfig = { count: { label: "Applications" } } satisfies ChartConfig;
-
 export default function DashboardPage() {
 	const { data: session } = useSession();
 	const { billing } = useBilling();
+	const { t, intl } = useI18n();
+	const scoreConfig = { score: { label: t("dash.scoreLabel"), color: "var(--chart-1)" } } satisfies ChartConfig;
+	const statusConfig = { count: { label: t("dash.pipelineCount") } } satisfies ChartConfig;
 	const { data, error, reload: load } = useApiQuery("dashboard", (b) =>
 		Promise.all([api.getStats(b), api.listApplications(b)]),
 	);
@@ -55,13 +56,13 @@ export default function DashboardPage() {
 	return (
 		<div className="flex flex-col gap-6">
 			<PageHeader
-				title={firstName ? `Welcome back, ${firstName}` : "Welcome back"}
-				description="Here's how your job search is going."
+				title={firstName ? t("dash.welcome", { name: firstName }) : t("dash.welcomeNoName")}
+				description={t("dash.subtitle")}
 				actions={
 					<Button asChild>
 						<Link href="/applications/new">
 							<PlusIcon />
-							New application
+							{t("nav.newApplication")}
 						</Link>
 					</Button>
 				}
@@ -73,30 +74,40 @@ export default function DashboardPage() {
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 				<KpiCard
 					icon={BriefcaseIcon}
-					label="Applications"
+					label={t("dash.kpiApplications")}
 					value={stats?.total}
-					hint={stats ? `${stats.by_status.saved} saved for later` : undefined}
+					hint={stats ? t("dash.kpiSaved", { n: stats.by_status.saved }) : undefined}
 					loading={loading}
 				/>
 				<KpiCard
 					icon={MessagesSquareIcon}
-					label="In progress"
+					label={t("dash.kpiInProgress")}
 					value={stats ? stats.by_status.applied + stats.by_status.interviewing : undefined}
-					hint={stats ? `${stats.by_status.interviewing} interviewing · ${stats.by_status.offer} offers` : undefined}
+					hint={
+						stats
+							? t("dash.kpiInProgressHint", { i: stats.by_status.interviewing, o: stats.by_status.offer })
+							: undefined
+					}
 					loading={loading}
 				/>
 				<KpiCard
 					icon={GaugeIcon}
-					label="Average match"
+					label={t("dash.kpiAvgMatch")}
 					value={stats ? (stats.average_score !== null ? `${stats.average_score}%` : "—") : undefined}
-					hint={stats ? `${stats.analyzed} analyzed` : undefined}
+					hint={stats ? t("dash.kpiAnalyzed", { n: stats.analyzed }) : undefined}
 					loading={loading}
 				/>
 				<KpiCard
 					icon={CoinsIcon}
-					label="Credits"
-					value={billing?.credits}
-					hint={billing ? `+ ${billing.daily_credit_left} free today` : undefined}
+					label={t("dash.kpiCredits")}
+					value={billing ? (billing.unlimited ? "∞" : billing.credits) : undefined}
+					hint={
+						billing
+							? billing.unlimited
+								? t("sidebar.unlimited")
+								: t("dash.kpiFreeToday", { n: billing.daily_credit_left })
+							: undefined
+					}
 					loading={!billing}
 					href="/billing"
 				/>
@@ -105,8 +116,8 @@ export default function DashboardPage() {
 			<div className="grid gap-4 lg:grid-cols-5">
 				<Card className="lg:col-span-3">
 					<CardHeader>
-						<CardTitle>Match scores</CardTitle>
-						<CardDescription>How well your CV fits each role, by application date</CardDescription>
+						<CardTitle>{t("dash.scoresTitle")}</CardTitle>
+						<CardDescription>{t("dash.scoresDesc")}</CardDescription>
 					</CardHeader>
 					<CardContent>
 						{loading ? (
@@ -128,7 +139,7 @@ export default function DashboardPage() {
 										tickMargin={8}
 										minTickGap={24}
 										tickFormatter={(v: string) =>
-											new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+											new Date(v).toLocaleDateString(intl, { month: "short", day: "numeric" })
 										}
 									/>
 									<YAxis domain={[0, 100]} tickLine={false} axisLine={false} tickCount={5} />
@@ -154,19 +165,19 @@ export default function DashboardPage() {
 								</AreaChart>
 							</ChartContainer>
 						) : (
-							<ChartPlaceholder text="Analyze at least two applications to see your score trend." />
+							<ChartPlaceholder text={t("dash.scoresEmpty")} />
 						)}
 					</CardContent>
 				</Card>
 
 				<Card className="lg:col-span-2">
 					<CardHeader>
-						<CardTitle>Pipeline</CardTitle>
-						<CardDescription>Applications by stage</CardDescription>
+						<CardTitle>{t("dash.pipelineTitle")}</CardTitle>
+						<CardDescription>{t("dash.pipelineDesc")}</CardDescription>
 						<CardAction>
 							<Button asChild variant="ghost" size="sm">
 								<Link href="/applications?view=board">
-									Board
+									{t("dash.board")}
 									<ArrowRightIcon />
 								</Link>
 							</Button>
@@ -180,7 +191,7 @@ export default function DashboardPage() {
 								<BarChart
 									layout="vertical"
 									data={APPLICATION_STATUSES.map((s) => ({
-										status: STATUS_META[s].label,
+										status: t(STATUS_META[s].label),
 										key: s,
 										count: stats.by_status[s],
 									}))}
@@ -192,7 +203,7 @@ export default function DashboardPage() {
 										dataKey="status"
 										tickLine={false}
 										axisLine={false}
-										width={88}
+										width={104}
 									/>
 									<ChartTooltip cursor={false} content={<ChartTooltipContent hideIndicator />} />
 									<Bar dataKey="count" radius={6} barSize={18}>
@@ -203,7 +214,7 @@ export default function DashboardPage() {
 								</BarChart>
 							</ChartContainer>
 						) : (
-							<ChartPlaceholder text="Your pipeline will show up here once you add applications." />
+							<ChartPlaceholder text={t("dash.pipelineEmpty")} />
 						)}
 					</CardContent>
 				</Card>
@@ -211,11 +222,11 @@ export default function DashboardPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Recent applications</CardTitle>
+					<CardTitle>{t("dash.recentTitle")}</CardTitle>
 					<CardAction>
 						<Button asChild variant="ghost" size="sm">
 							<Link href="/applications">
-								View all
+								{t("dash.viewAll")}
 								<ArrowRightIcon />
 							</Link>
 						</Button>
@@ -234,16 +245,14 @@ export default function DashboardPage() {
 								<EmptyMedia variant="icon">
 									<BriefcaseIcon />
 								</EmptyMedia>
-								<EmptyTitle>No applications yet</EmptyTitle>
-								<EmptyDescription>
-									Add a job you&apos;re interested in, then see how your CV matches it.
-								</EmptyDescription>
+								<EmptyTitle>{t("dash.emptyTitle")}</EmptyTitle>
+								<EmptyDescription>{t("dash.emptyDesc")}</EmptyDescription>
 							</EmptyHeader>
 							<EmptyContent>
 								<Button asChild>
 									<Link href="/applications/new">
 										<PlusIcon />
-										Add your first application
+										{t("dash.addFirst")}
 									</Link>
 								</Button>
 							</EmptyContent>
@@ -260,7 +269,7 @@ export default function DashboardPage() {
 										<div className="min-w-0 flex-1">
 											<div className="truncate font-medium">{a.title}</div>
 											<div className="truncate text-xs text-muted-foreground">
-												{a.company} · updated {formatRelative(a.updated_at)}
+												{t("dash.updated", { company: a.company, when: formatRelative(a.updated_at, t, intl) })}
 											</div>
 										</div>
 										{a.analysis && <ScorePill score={a.analysis.score} />}

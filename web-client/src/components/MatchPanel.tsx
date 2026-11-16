@@ -27,6 +27,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/api";
 import { useBilling } from "@/lib/billing";
 import { type FriendlyError, toFriendlyError } from "@/lib/errors";
@@ -45,6 +46,7 @@ export function MatchPanel({
 }) {
 	const bearer = useBearer();
 	const { refresh } = useBilling();
+	const { t, locale } = useI18n();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<FriendlyError | null>(null);
 	const [lastForce, setLastForce] = useState(false);
@@ -58,9 +60,9 @@ export function MatchPanel({
 		setLoading(true);
 		setLastForce(force);
 		try {
-			const r = await api.runMatch(bearer, application.id, cvText, force);
+			const r = await api.runMatch(bearer, application.id, cvText, locale, force);
 			onResult(r);
-			toast.success("Match analysis ready");
+			toast.success(t("match.ready"));
 		} catch (e) {
 			setError(toFriendlyError(e));
 		} finally {
@@ -75,12 +77,12 @@ export function MatchPanel({
 				<CardContent className="flex flex-wrap items-center justify-between gap-3">
 					<div className="flex flex-col gap-0.5">
 						<span className="font-medium">
-							{analysis ? "Updated your CV?" : "See how well you fit this role"}
+							{analysis ? t("match.updatedCv") : t("match.prompt")}
 						</span>
 						{canRun || loading ? (
 							<RunCostNote action="analysis" />
 						) : (
-							<span className="text-xs text-muted-foreground">Add your CV on the left to get started.</span>
+							<span className="text-xs text-muted-foreground">{t("match.addCv")}</span>
 						)}
 					</div>
 					<div className="flex items-center">
@@ -90,14 +92,14 @@ export function MatchPanel({
 							className={analysis ? "rounded-r-none" : undefined}
 						>
 							{loading ? <Spinner /> : <SparklesIcon />}
-							{loading ? "Analyzing…" : analysis ? "Analyze again" : "Analyze match"}
+							{loading ? t("match.analyzing") : analysis ? t("match.again") : t("match.submit")}
 						</Button>
 						{analysis && (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
 										disabled={!canRun}
-										aria-label="More analysis options"
+										aria-label={t("match.moreOptions")}
 										className="rounded-l-none border-l border-primary-foreground/20 px-2"
 									>
 										<ChevronDownIcon />
@@ -105,11 +107,11 @@ export function MatchPanel({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-64">
 									<DropdownMenuLabel className="font-normal text-muted-foreground">
-										Same CV? You&apos;ll get your saved result for free.
+										{t("match.sameCvFree")}
 									</DropdownMenuLabel>
 									<DropdownMenuItem onClick={() => run(true)}>
 										<RefreshCwIcon />
-										Generate a fresh analysis
+										{t("match.fresh")}
 									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -131,10 +133,8 @@ export function MatchPanel({
 							<EmptyMedia variant="icon">
 								<SparklesIcon />
 							</EmptyMedia>
-							<EmptyTitle>No analysis yet</EmptyTitle>
-							<EmptyDescription>
-								You&apos;ll get a fit score, your strengths, the gaps to address, and likely interview questions.
-							</EmptyDescription>
+							<EmptyTitle>{t("match.emptyTitle")}</EmptyTitle>
+							<EmptyDescription>{t("match.emptyDesc")}</EmptyDescription>
 						</EmptyHeader>
 					</Empty>
 				</Card>
@@ -152,16 +152,19 @@ function AnalysisView({
 	updatedAt: string | null;
 	dimmed: boolean;
 }) {
+	const { t, intl } = useI18n();
 	return (
 		<div className={`flex flex-col gap-4 transition-opacity ${dimmed ? "opacity-50" : ""}`}>
 			<Card>
 				<CardContent className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
 					<ScoreGauge score={analysis.score} />
 					<div className="flex flex-col gap-2 text-center sm:text-left">
-						<span className="text-sm font-medium text-muted-foreground">Summary</span>
+						<span className="text-sm font-medium text-muted-foreground">{t("match.summary")}</span>
 						<p className="text-base leading-relaxed">{analysis.summary}</p>
 						{updatedAt && (
-							<span className="text-xs text-muted-foreground">Analyzed {formatRelative(updatedAt)}</span>
+							<span className="text-xs text-muted-foreground">
+								{t("match.analyzedAgo", { when: formatRelative(updatedAt, t, intl) })}
+							</span>
 						)}
 					</div>
 				</CardContent>
@@ -169,15 +172,15 @@ function AnalysisView({
 
 			<div className="grid gap-4 md:grid-cols-2">
 				<InsightCard
-					title="Strengths"
-					description="What makes you a good fit"
+					title={t("match.strengths")}
+					description={t("match.strengthsDesc")}
 					items={analysis.strengths}
 					icon={<CheckCircle2Icon className="size-4 text-success" />}
 					tone="bg-success-soft"
 				/>
 				<InsightCard
-					title="Gaps to address"
-					description="Where your CV falls short"
+					title={t("match.gaps")}
+					description={t("match.gapsDesc")}
 					items={analysis.gaps}
 					icon={<CircleAlertIcon className="size-4 text-warning" />}
 					tone="bg-warning-soft"
@@ -188,9 +191,9 @@ function AnalysisView({
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<MessageCircleQuestionIcon className="size-4 text-primary" />
-						Interview prep
+						{t("match.prep")}
 					</CardTitle>
-					<CardDescription>Questions you&apos;re likely to be asked</CardDescription>
+					<CardDescription>{t("match.prepDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<Accordion type="single" collapsible className="w-full">
@@ -205,8 +208,7 @@ function AnalysisView({
 									</span>
 								</AccordionTrigger>
 								<AccordionContent className="pl-8 text-muted-foreground">
-									Tip: answer with a concrete story (situation, action, result) from your CV that maps to this
-									requirement.
+									{t("match.tip")}
 								</AccordionContent>
 							</AccordionItem>
 						))}

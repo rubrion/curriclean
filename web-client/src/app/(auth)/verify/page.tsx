@@ -8,7 +8,9 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthHeading } from "@/components/AuthForm";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { authApi, authErrorMessage } from "@/lib/authApi";
+import { useI18n } from "@/i18n/client";
+import type { TKey } from "@/i18n/dictionaries";
+import { authApi, authErrorKey } from "@/lib/authApi";
 
 export default function VerifyPage() {
 	return (
@@ -20,13 +22,15 @@ export default function VerifyPage() {
 
 function VerifyInner() {
 	const token = useSearchParams().get("token");
-	if (!token) return <Failed message="This verification link is incomplete. Open the link from your email again." />;
+	const { t } = useI18n();
+	if (!token) return <Failed message={t("verify.incomplete")} />;
 	return <VerifyToken token={token} />;
 }
 
 function VerifyToken({ token }: { token: string }) {
 	const router = useRouter();
-	const [state, setState] = useState<{ status: "pending" | "ok" | "fail"; message?: string }>({
+	const { t } = useI18n();
+	const [state, setState] = useState<{ status: "pending" | "ok" | "fail"; key?: TKey }>({
 		status: "pending",
 	});
 
@@ -37,24 +41,24 @@ function VerifyToken({ token }: { token: string }) {
 				setState({ status: "ok" });
 				setTimeout(() => router.push("/login?verified=1"), 1200);
 			})
-			.catch((e: unknown) => setState({ status: "fail", message: authErrorMessage(e) }));
+			.catch((e: unknown) => setState({ status: "fail", key: authErrorKey(e) }));
 	}, [token, router]);
 
-	if (state.status === "fail") return <Failed message={state.message} />;
+	if (state.status === "fail") return <Failed message={state.key ? t(state.key) : undefined} />;
 
 	return (
 		<div className="flex flex-col items-center gap-4 text-center">
 			{state.status === "pending" ? (
 				<>
 					<Spinner className="size-8 text-primary" />
-					<AuthHeading title="Verifying your email…" />
+					<AuthHeading title={t("verify.pending")} />
 				</>
 			) : (
 				<>
 					<span className="flex size-12 items-center justify-center rounded-full bg-success-soft text-success">
 						<CheckCircle2Icon className="size-6" />
 					</span>
-					<AuthHeading title="You're verified!" description="Taking you to sign in…" />
+					<AuthHeading title={t("verify.ok")} description={t("verify.redirecting")} />
 				</>
 			)}
 		</div>
@@ -62,14 +66,15 @@ function VerifyToken({ token }: { token: string }) {
 }
 
 function Failed({ message }: { message?: string }) {
+	const { t } = useI18n();
 	return (
 		<div className="flex flex-col items-center gap-4 text-center">
 			<span className="flex size-12 items-center justify-center rounded-full bg-danger-soft text-danger">
 				<XCircleIcon className="size-6" />
 			</span>
-			<AuthHeading title="We couldn't verify your email" description={message} />
+			<AuthHeading title={t("verify.failed")} description={message} />
 			<Button asChild variant="outline" className="w-full">
-				<Link href="/login">Back to sign in</Link>
+				<Link href="/login">{t("auth.backToSignIn")}</Link>
 			</Button>
 		</div>
 	);

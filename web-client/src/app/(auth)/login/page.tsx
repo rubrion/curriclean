@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n } from "@/i18n/client";
 
 const OAUTH_GOOGLE_ENABLED = process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "1";
 const OAUTH_GITHUB_ENABLED = process.env.NEXT_PUBLIC_AUTH_GITHUB_ENABLED === "1";
@@ -24,6 +25,7 @@ export default function LoginPage() {
 
 function LoginInner() {
 	const router = useRouter();
+	const { t } = useI18n();
 	const params = useSearchParams();
 	const verified = params.get("verified") === "1";
 	const reset = params.get("reset") === "1";
@@ -41,7 +43,7 @@ function LoginInner() {
 		const res = await signIn("credentials", { email, password, redirect: false });
 		if (!res || res.error) {
 			setSubmitting(false);
-			setError("That email and password don't match, or your email isn't verified yet.");
+			setError(t("login.invalid"));
 			return;
 		}
 		router.push(callbackUrl);
@@ -49,15 +51,15 @@ function LoginInner() {
 
 	return (
 		<div className="flex flex-col gap-5">
-			<AuthHeading title="Welcome back" description="Sign in to continue your job search." />
+			<AuthHeading title={t("login.title")} description={t("login.subtitle")} />
 
-			{verified && <AuthNotice kind="success">Email verified — you can sign in now.</AuthNotice>}
-			{reset && <AuthNotice kind="success">Password updated. Sign in with your new password.</AuthNotice>}
+			{verified && <AuthNotice kind="success">{t("login.verified")}</AuthNotice>}
+			{reset && <AuthNotice kind="success">{t("login.reset")}</AuthNotice>}
 
 			<form onSubmit={onSubmit}>
 				<FieldGroup>
 					<Field>
-						<FieldLabel htmlFor="email">Email</FieldLabel>
+						<FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
 						<Input
 							id="email"
 							type="email"
@@ -65,14 +67,14 @@ function LoginInner() {
 							required
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							placeholder="you@example.com"
+							placeholder={t("auth.emailPlaceholder")}
 						/>
 					</Field>
 					<Field>
 						<div className="flex items-center justify-between">
-							<FieldLabel htmlFor="password">Password</FieldLabel>
+							<FieldLabel htmlFor="password">{t("auth.password")}</FieldLabel>
 							<Link href="/forgot" className="text-xs text-muted-foreground hover:text-primary">
-								Forgot password?
+								{t("login.forgot")}
 							</Link>
 						</div>
 						<Input
@@ -87,12 +89,12 @@ function LoginInner() {
 					{error && <AuthNotice kind="error">{error}</AuthNotice>}
 					<Button type="submit" size="lg" disabled={submitting} className="w-full">
 						{submitting && <Spinner />}
-						Sign in
+						{t("login.submit")}
 					</Button>
 
 					{(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
 						<>
-							<FieldSeparator>or continue with</FieldSeparator>
+							<FieldSeparator>{t("login.or")}</FieldSeparator>
 							<div className="grid gap-2 sm:grid-cols-2">
 								{OAUTH_GOOGLE_ENABLED && (
 									<Button type="button" variant="outline" size="lg" onClick={() => signIn("google", { callbackUrl })}>
@@ -111,9 +113,9 @@ function LoginInner() {
 			</form>
 
 			<p className="text-center text-sm text-muted-foreground">
-				New to CurriClean?{" "}
+				{t("login.newHere")}{" "}
 				<Link href="/register" className="font-medium text-primary hover:underline">
-					Create an account
+					{t("login.createAccount")}
 				</Link>
 			</p>
 		</div>

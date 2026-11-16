@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/Providers";
+import { getLocale } from "@/i18n/server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,15 +29,16 @@ export const metadata: Metadata = {
 	manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const locale = await getLocale();
 	return (
-		<html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+		<html lang={locale === "pt" ? "pt-BR" : "en"} suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
 			<body className="antialiased">
-				<Providers>{children}</Providers>
+				<Providers locale={locale}>{children}</Providers>
 			</body>
 		</html>
 	);

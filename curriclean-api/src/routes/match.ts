@@ -11,6 +11,7 @@ match.use("*", jwtMiddleware());
 
 const CvRequestSchema = z.object({
   cv_text: z.string().min(50),
+  language: z.enum(["en", "pt"]).default("en"),
 });
 
 async function loadApp(env: Env, appId: string, userId: string) {
@@ -33,8 +34,8 @@ match.post("/:application_id/match", async (c) => {
   if (!parsed.success) {
     return c.json({ detail: "VALIDATION_ERROR", errors: parsed.error.flatten() }, 422);
   }
-  const { cv_text } = parsed.data;
-  const cacheKey = await buildCacheKey(app.description, cv_text);
+  const { cv_text, language } = parsed.data;
+  const cacheKey = await buildCacheKey(language, app.description, cv_text);
 
   // Same job + CV → return the stored analysis (free) unless force=true.
   const stored = parseAnalysis(app.analysis);
@@ -43,7 +44,7 @@ match.post("/:application_id/match", async (c) => {
   }
 
   const res = await metered<MatchAnalysis>(c.env, userId, "analysis", `Match: ${app.title} at ${app.company}`, () =>
-    runMatch(c.env, app.description, cv_text)
+    runMatch(c.env, app.description, cv_text, language)
   );
   if (!res.ok) return c.json(res.body, res.status);
 
@@ -73,12 +74,12 @@ match.post("/:application_id/tailor", async (c) => {
   if (!parsed.success) {
     return c.json({ detail: "VALIDATION_ERROR", errors: parsed.error.flatten() }, 422);
   }
-  const { cv_text } = parsed.data;
+  const { cv_text, language } = parsed.data;
 
   const analysis = parseAnalysis(app.analysis);
   if (!analysis) return c.json({ detail: "ANALYSIS_REQUIRED" }, 409);
 
-  const cacheKey = await buildCacheKey("tailor", app.description, cv_text);
+  const cacheKey = await buildCacheKey("tailor", language, app.description, cv_text);
   if (!force && app.tailored && app.tailored_hash === cacheKey) {
     return c.json({
       application_id: appId,
@@ -88,7 +89,7 @@ match.post("/:application_id/tailor", async (c) => {
   }
 
   const res = await metered<TailoredCv>(c.env, userId, "tailor", `Tailored CV: ${app.title} at ${app.company}`, () =>
-    runTailor(c.env, app.description, cv_text, analysis.gaps)
+    runTailor(c.env, app.description, cv_text, analysis.gaps, language)
   );
   if (!res.ok) return c.json(res.body, res.status);
 

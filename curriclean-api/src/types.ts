@@ -85,6 +85,7 @@ export interface Env {
   FRONTEND_URL: string;
   EMAIL_FROM: string;
   FREE_DAILY_CREDITS?: string;
+  UNLIMITED_FOR?: string;
   STRIPE_PUBLISHABLE_KEY?: string;
 }
 

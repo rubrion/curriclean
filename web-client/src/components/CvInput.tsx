@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/api";
-import { toFriendlyError } from "@/lib/errors";
+import { errorKeys, toFriendlyError } from "@/lib/errors";
 import { useBearer } from "@/lib/useBearer";
 import { cn } from "@/lib/utils";
 
 /** Your CV: drop/upload a PDF or paste text. Kept in memory only, never saved. */
 export function CvInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
 	const bearer = useBearer();
+	const { t } = useI18n();
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [uploading, setUploading] = useState(false);
 	const [dragging, setDragging] = useState(false);
@@ -28,10 +30,10 @@ export function CvInput({ value, onChange }: { value: string; onChange: (v: stri
 			const res = await api.parseCvPdf(bearer, file);
 			onChange(res.text);
 			setFileName(file.name);
-			toast.success("CV imported from PDF");
+			toast.success(t("cv.imported"));
 		} catch (e) {
-			const err = toFriendlyError(e);
-			toast.error(err.title, { description: err.message });
+			const k = errorKeys(toFriendlyError(e));
+			toast.error(t(k.title), { description: t(k.message) });
 		} finally {
 			setUploading(false);
 		}
@@ -40,8 +42,8 @@ export function CvInput({ value, onChange }: { value: string; onChange: (v: stri
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Your CV</CardTitle>
-				<CardDescription>Used for this session only. We never store it.</CardDescription>
+				<CardTitle>{t("cv.title")}</CardTitle>
+				<CardDescription>{t("cv.subtitle")}</CardDescription>
 				{value && (
 					<CardAction>
 						<Button
@@ -53,7 +55,7 @@ export function CvInput({ value, onChange }: { value: string; onChange: (v: stri
 							}}
 						>
 							<XIcon />
-							Clear
+							{t("cv.clear")}
 						</Button>
 					</CardAction>
 				)}
@@ -96,23 +98,23 @@ export function CvInput({ value, onChange }: { value: string; onChange: (v: stri
 						<UploadIcon className="size-5 text-muted-foreground" />
 					)}
 					<span className="font-medium">
-						{uploading ? "Reading your PDF…" : fileName ?? "Drop your CV PDF here"}
+						{uploading ? t("cv.reading") : (fileName ?? t("cv.drop"))}
 					</span>
 					<span className="text-xs text-muted-foreground">
-						{fileName ? "Click to replace" : "or click to browse · max 5 MB"}
+						{fileName ? t("cv.replace") : t("cv.browse")}
 					</span>
 				</button>
 				<Textarea
 					value={value}
 					onChange={(e) => onChange(e.target.value)}
-					placeholder="…or paste your CV text here"
+					placeholder={t("cv.paste")}
 					rows={8}
 					className="max-h-80 min-h-32 text-sm"
 				/>
 				<span className="text-right text-xs tabular-nums text-muted-foreground">
 					{value.trim().length > 0 && value.trim().length < 50
-						? "A little more text, please (50+ characters)"
-						: `${value.trim().split(/\s+/).filter(Boolean).length} words`}
+						? t("cv.needMore")
+						: t("cv.words", { n: value.trim().split(/\s+/).filter(Boolean).length })}
 				</span>
 			</CardContent>
 		</Card>

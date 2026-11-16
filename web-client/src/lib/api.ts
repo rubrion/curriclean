@@ -104,12 +104,13 @@ export const api = {
 		bearer: string | null | undefined,
 		id: string,
 		cvText: string,
+		language: "en" | "pt",
 		force = false,
 	): Promise<MatchResponse> {
 		const qs = force ? "?force=true" : "";
 		return request<MatchResponse>(`/applications/${id}/match${qs}`, bearer, {
 			method: "POST",
-			body: JSON.stringify({ cv_text: cvText }),
+			body: JSON.stringify({ cv_text: cvText, language }),
 		});
 	},
 
@@ -117,12 +118,13 @@ export const api = {
 		bearer: string | null | undefined,
 		id: string,
 		cvText: string,
+		language: "en" | "pt",
 		force = false,
 	): Promise<TailorResponse> {
 		const qs = force ? "?force=true" : "";
 		return request<TailorResponse>(`/applications/${id}/tailor${qs}`, bearer, {
 			method: "POST",
-			body: JSON.stringify({ cv_text: cvText }),
+			body: JSON.stringify({ cv_text: cvText, language }),
 		});
 	},
 

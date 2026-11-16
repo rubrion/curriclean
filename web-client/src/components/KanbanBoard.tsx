@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import { CompanyAvatar } from "@/components/CompanyAvatar";
 import { ScorePill } from "@/components/ScoreGauge";
+import { useI18n } from "@/i18n/client";
 import { formatDate, STATUS_META } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,7 @@ export function KanbanBoard({
 
 function Column({ status, items }: { status: ApplicationStatus; items: Application[] }) {
 	const { setNodeRef, isOver } = useDroppable({ id: status });
+	const { t } = useI18n();
 	const meta = STATUS_META[status];
 	return (
 		<div
@@ -74,7 +76,7 @@ function Column({ status, items }: { status: ApplicationStatus; items: Applicati
 			<div className="flex items-center justify-between px-1.5 py-1">
 				<span className="flex items-center gap-2 text-sm font-medium">
 					<span className={cn("size-2 rounded-full", meta.dot)} />
-					{meta.label}
+					{t(meta.label)}
 				</span>
 				<span className="rounded-full bg-background px-2 text-xs tabular-nums text-muted-foreground">
 					{items.length}
@@ -86,7 +88,7 @@ function Column({ status, items }: { status: ApplicationStatus; items: Applicati
 				))}
 				{items.length === 0 && (
 					<div className="flex flex-1 items-center justify-center rounded-lg border border-dashed py-6 text-xs text-muted-foreground">
-						Drop here
+						{t("board.dropHere")}
 					</div>
 				)}
 			</div>
@@ -104,6 +106,7 @@ function DraggableCard({ app }: { app: Application }) {
 }
 
 function CardBody({ app, className }: { app: Application; className?: string }) {
+	const { intl } = useI18n();
 	return (
 		<Link
 			href={`/applications/${app.id}`}
@@ -121,7 +124,7 @@ function CardBody({ app, className }: { app: Application; className?: string }) 
 				</div>
 			</div>
 			<div className="flex items-center justify-between text-xs text-muted-foreground">
-				<span>{formatDate(app.applied_at)}</span>
+				<span>{formatDate(app.applied_at, intl)}</span>
 				{app.analysis && <ScorePill score={app.analysis.score} />}
 			</div>
 		</Link>

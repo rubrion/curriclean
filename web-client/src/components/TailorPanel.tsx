@@ -12,6 +12,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/api";
 import { useBilling } from "@/lib/billing";
 import { type FriendlyError, toFriendlyError } from "@/lib/errors";
@@ -30,6 +31,7 @@ export function TailorPanel({
 }) {
 	const bearer = useBearer();
 	const { refresh } = useBilling();
+	const { t, locale } = useI18n();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<FriendlyError | null>(null);
 	const [lastForce, setLastForce] = useState(false);
@@ -44,8 +46,8 @@ export function TailorPanel({
 		setLoading(true);
 		setLastForce(force);
 		try {
-			onResult(await api.tailorCv(bearer, application.id, cvText, force));
-			toast.success("Tailored suggestions ready");
+			onResult(await api.tailorCv(bearer, application.id, cvText, locale, force));
+			toast.success(t("tailor.ready"));
 		} catch (e) {
 			setError(toFriendlyError(e));
 		} finally {
@@ -59,11 +61,11 @@ export function TailorPanel({
 			<Card>
 				<CardContent className="flex flex-wrap items-center justify-between gap-3">
 					<div className="flex flex-col gap-0.5">
-						<span className="font-medium">Rewrite your CV for this job</span>
+						<span className="font-medium">{t("tailor.prompt")}</span>
 						{!hasAnalysis ? (
-							<span className="text-xs text-muted-foreground">Run a match first — tailoring targets its gaps.</span>
+							<span className="text-xs text-muted-foreground">{t("tailor.needMatch")}</span>
 						) : cvText.trim().length < 50 ? (
-							<span className="text-xs text-muted-foreground">Add your CV on the left to get started.</span>
+							<span className="text-xs text-muted-foreground">{t("match.addCv")}</span>
 						) : (
 							<RunCostNote action="tailor" />
 						)}
@@ -72,12 +74,12 @@ export function TailorPanel({
 						{tailored && (
 							<Button variant="outline" disabled={!canRun} onClick={() => run(true)}>
 								<RefreshCwIcon />
-								Regenerate
+								{t("tailor.regenerate")}
 							</Button>
 						)}
 						<Button disabled={!canRun} onClick={() => run(false)}>
 							{loading ? <Spinner /> : <WandSparklesIcon />}
-							{loading ? "Writing…" : tailored ? "Tailor again" : "Tailor my CV"}
+							{loading ? t("tailor.writing") : tailored ? t("tailor.again") : t("tailor.submit")}
 						</Button>
 					</div>
 				</CardContent>
@@ -99,11 +101,8 @@ export function TailorPanel({
 							<EmptyMedia variant="icon">
 								<WandSparklesIcon />
 							</EmptyMedia>
-							<EmptyTitle>Make your CV speak this job&apos;s language</EmptyTitle>
-							<EmptyDescription>
-								Get a targeted headline, a rewritten summary, improved bullet points and the keywords recruiters
-								scan for. Nothing is invented — only reframed.
-							</EmptyDescription>
+							<EmptyTitle>{t("tailor.emptyTitle")}</EmptyTitle>
+							<EmptyDescription>{t("tailor.emptyDesc")}</EmptyDescription>
 						</EmptyHeader>
 					</Empty>
 				</Card>
@@ -121,11 +120,12 @@ function TailoredView({
 	updatedAt: string | null;
 	dimmed: boolean;
 }) {
+	const { t, intl } = useI18n();
 	return (
 		<div className={`flex flex-col gap-4 transition-opacity ${dimmed ? "opacity-50" : ""}`}>
 			<Card>
 				<CardHeader>
-					<CardDescription>Headline</CardDescription>
+					<CardDescription>{t("tailor.headline")}</CardDescription>
 					<CardTitle className="text-lg leading-snug">{tailored.headline}</CardTitle>
 					<CardAction>
 						<CopyButton text={`${tailored.headline}\n\n${tailored.summary}`} />
@@ -133,14 +133,18 @@ function TailoredView({
 				</CardHeader>
 				<CardContent className="flex flex-col gap-3">
 					<p className="leading-relaxed text-foreground/85">{tailored.summary}</p>
-					{updatedAt && <span className="text-xs text-muted-foreground">Generated {formatRelative(updatedAt)}</span>}
+					{updatedAt && (
+						<span className="text-xs text-muted-foreground">
+							{t("tailor.generated", { when: formatRelative(updatedAt, t, intl) })}
+						</span>
+					)}
 				</CardContent>
 			</Card>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Improved bullet points</CardTitle>
-					<CardDescription>Before and after, with why each change helps</CardDescription>
+					<CardTitle>{t("tailor.bullets")}</CardTitle>
+					<CardDescription>{t("tailor.bulletsDesc")}</CardDescription>
 					<CardAction>
 						<CopyButton text={tailored.bullets.map((b) => `• ${b.improved}`).join("\n")} />
 					</CardAction>
@@ -165,8 +169,8 @@ function TailoredView({
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Keywords to include</CardTitle>
-					<CardDescription>Terms from the posting that applicant tracking systems look for</CardDescription>
+					<CardTitle>{t("tailor.keywords")}</CardTitle>
+					<CardDescription>{t("tailor.keywordsDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-2">
 					{tailored.keywords.map((k) => (
@@ -181,6 +185,7 @@ function TailoredView({
 }
 
 function CopyButton({ text }: { text: string }) {
+	const { t } = useI18n();
 	const [copied, setCopied] = useState(false);
 	return (
 		<Button
@@ -192,12 +197,12 @@ function CopyButton({ text }: { text: string }) {
 					setCopied(true);
 					setTimeout(() => setCopied(false), 1500);
 				} catch {
-					toast.error("Couldn't copy to clipboard");
+					toast.error(t("tailor.copyFailed"));
 				}
 			}}
 		>
 			{copied ? <CheckIcon /> : <CopyIcon />}
-			{copied ? "Copied" : "Copy"}
+			{copied ? t("tailor.copied") : t("tailor.copy")}
 		</Button>
 	);
 }

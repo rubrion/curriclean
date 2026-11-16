@@ -18,6 +18,17 @@ export function dailyCredit(env: Env): number {
   return parseInt(env.FREE_DAILY_CREDITS ?? "3", 10);
 }
 
+/** Accounts listed in UNLIMITED_FOR (comma-separated emails) never spend credits. */
+export async function isUnlimited(env: Env, userId: string): Promise<boolean> {
+  const list = (env.UNLIMITED_FOR ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (!list.length) return false;
+  const row = await env.DB.prepare("SELECT email FROM users WHERE id = ?").bind(userId).first<{ email: string }>();
+  return Boolean(row && list.includes(row.email.toLowerCase()));
+}
+
 export async function balance(env: Env, userId: string): Promise<number> {
   const row = await env.DB.prepare("SELECT credits FROM wallets WHERE user_id = ?")
     .bind(userId)

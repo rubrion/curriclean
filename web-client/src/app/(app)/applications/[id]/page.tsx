@@ -33,7 +33,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
-import { toFriendlyError } from "@/lib/errors";
+import { useI18n } from "@/i18n/client";
+import { errorKeys, toFriendlyError } from "@/lib/errors";
 import { formatDate, STATUS_META } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from "@/lib/types";
 import { useApiQuery } from "@/lib/useApiQuery";
@@ -44,6 +45,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 	const { id } = use(params);
 	const router = useRouter();
 	const bearer = useBearer();
+	const { t, intl } = useI18n();
 	const { data: app, error, reload: load, setData: setApp } = useApiQuery<Application>(id, (b) =>
 		api.getApplication(b, id),
 	);
@@ -57,10 +59,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 		setApp({ ...app, status: s });
 		try {
 			setApp(await api.updateApplication(bearer, app.id, { status: s }));
-			toast.success(`Moved to ${STATUS_META[s].label}`);
+			toast.success(t("status.movedTo", { stage: t(STATUS_META[s].label) }));
 		} catch (e) {
 			setApp(prev);
-			toast.error(toFriendlyError(e).title);
+			toast.error(t(errorKeys(toFriendlyError(e)).title));
 		}
 	}
 
@@ -68,10 +70,10 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 		if (!app || !bearer) return;
 		try {
 			await api.deleteApplication(bearer, app.id);
-			toast.success("Application deleted");
+			toast.success(t("detail.deleted"));
 			router.push("/applications");
 		} catch (e) {
-			toast.error(toFriendlyError(e).title);
+			toast.error(t(errorKeys(toFriendlyError(e)).title));
 		}
 	}
 
@@ -82,7 +84,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 				<Button asChild variant="outline" className="self-start">
 					<Link href="/applications">
 						<ArrowLeftIcon />
-						Back to applications
+						{t("detail.backToApps")}
 					</Link>
 				</Button>
 			</div>
@@ -97,7 +99,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 				<Button asChild variant="ghost" size="sm" className="self-start text-muted-foreground">
 					<Link href="/applications">
 						<ArrowLeftIcon />
-						Applications
+						{t("common.back")}
 					</Link>
 				</Button>
 				<div className="flex flex-wrap items-start justify-between gap-4">
@@ -109,7 +111,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 								<span>{app.company}</span>
 								<span className="flex items-center gap-1">
 									<CalendarIcon className="size-3.5" />
-									{formatDate(app.applied_at)}
+									{formatDate(app.applied_at, intl)}
 								</span>
 							</div>
 						</div>
@@ -123,21 +125,21 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 								{APPLICATION_STATUSES.map((s) => (
 									<SelectItem key={s} value={s}>
 										<span className={cn("size-2 rounded-full", STATUS_META[s].dot)} />
-										{STATUS_META[s].label}
+										{t(STATUS_META[s].label)}
 									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="outline" size="icon" aria-label="More actions">
+								<Button variant="outline" size="icon" aria-label={t("detail.moreActions")}>
 									<MoreHorizontalIcon />
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
 								<DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
 									<Trash2Icon />
-									Delete application
+									{t("detail.delete")}
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -149,7 +151,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 				<div className="flex flex-col gap-6 lg:col-span-2">
 					<Card>
 						<CardHeader>
-							<CardTitle>Job description</CardTitle>
+							<CardTitle>{t("detail.jobDescription")}</CardTitle>
 						</CardHeader>
 						<CardContent>
 							<div className="max-h-[28rem] overflow-auto whitespace-pre-wrap pr-1 text-sm leading-relaxed text-foreground/85">
@@ -163,9 +165,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 				<div className="lg:col-span-3">
 					<Tabs defaultValue="match" className="gap-4">
 						<TabsList className="w-full sm:w-auto">
-							<TabsTrigger value="match">Match</TabsTrigger>
-							<TabsTrigger value="tailor">Tailored CV</TabsTrigger>
-							<TabsTrigger value="profiles">People</TabsTrigger>
+							<TabsTrigger value="match">{t("detail.tabMatch")}</TabsTrigger>
+							<TabsTrigger value="tailor">{t("detail.tabTailor")}</TabsTrigger>
+							<TabsTrigger value="profiles">{t("detail.tabPeople")}</TabsTrigger>
 						</TabsList>
 						<TabsContent value="match">
 							<MatchPanel
@@ -195,17 +197,17 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete this application?</DialogTitle>
+						<DialogTitle>{t("detail.deleteTitle")}</DialogTitle>
 						<DialogDescription>
-							{app.title} at {app.company} and its analysis will be removed. This can&apos;t be undone.
+							{t("detail.deleteDesc", { title: app.title, company: app.company })}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<DialogClose asChild>
-							<Button variant="outline">Cancel</Button>
+							<Button variant="outline">{t("common.cancel")}</Button>
 						</DialogClose>
 						<Button variant="destructive" onClick={onDelete}>
-							Delete
+							{t("detail.deleteConfirm")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

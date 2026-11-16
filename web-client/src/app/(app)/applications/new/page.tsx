@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/api";
 import { type FriendlyError, toFriendlyError } from "@/lib/errors";
 import { STATUS_META } from "@/lib/format";
@@ -24,6 +25,7 @@ import { useBearer } from "@/lib/useBearer";
 export default function NewApplicationPage() {
 	const router = useRouter();
 	const bearer = useBearer();
+	const { t } = useI18n();
 	const [company, setCompany] = useState("");
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -45,7 +47,7 @@ export default function NewApplicationPage() {
 				applied_at: `${appliedAt}T12:00:00.000Z`, // midday UTC: the same calendar day in every timezone
 				status: statusValue,
 			});
-			toast.success("Application saved");
+			toast.success(t("new.saved"));
 			router.push(`/applications/${created.id}`);
 		} catch (err) {
 			setError(toFriendlyError(err));
@@ -58,12 +60,12 @@ export default function NewApplicationPage() {
 			<Button asChild variant="ghost" size="sm" className="self-start text-muted-foreground">
 				<Link href="/applications">
 					<ArrowLeftIcon />
-					Applications
+					{t("common.back")}
 				</Link>
 			</Button>
 			<PageHeader
-				title="New application"
-				description="Paste the job description — you'll match your CV against it next."
+				title={t("new.title")}
+				description={t("new.subtitle")}
 			/>
 			<form onSubmit={onSubmit}>
 				<Card>
@@ -71,42 +73,42 @@ export default function NewApplicationPage() {
 						<FieldGroup>
 							<div className="grid gap-4 sm:grid-cols-2">
 								<Field>
-									<FieldLabel htmlFor="title">Role</FieldLabel>
+									<FieldLabel htmlFor="title">{t("new.role")}</FieldLabel>
 									<Input
 										id="title"
 										required
 										value={title}
 										onChange={(e) => setTitle(e.target.value)}
-										placeholder="Senior Frontend Engineer"
+										placeholder={t("new.rolePlaceholder")}
 									/>
 								</Field>
 								<Field>
-									<FieldLabel htmlFor="company">Company</FieldLabel>
+									<FieldLabel htmlFor="company">{t("new.company")}</FieldLabel>
 									<Input
 										id="company"
 										required
 										value={company}
 										onChange={(e) => setCompany(e.target.value)}
-										placeholder="Acme Inc."
+										placeholder={t("new.companyPlaceholder")}
 									/>
 								</Field>
 							</div>
 							<Field>
-								<FieldLabel htmlFor="description">Job description</FieldLabel>
+								<FieldLabel htmlFor="description">{t("new.description")}</FieldLabel>
 								<Textarea
 									id="description"
 									required
 									value={description}
 									onChange={(e) => setDescription(e.target.value)}
 									rows={12}
-									placeholder="Paste the full job posting: responsibilities, requirements, nice-to-haves…"
+									placeholder={t("new.descriptionPlaceholder")}
 									className="min-h-56"
 								/>
-								<FieldDescription>The more complete, the better the match analysis.</FieldDescription>
+								<FieldDescription>{t("new.descriptionHint")}</FieldDescription>
 							</Field>
 							<div className="grid gap-4 sm:grid-cols-2">
 								<Field>
-									<FieldLabel htmlFor="applied">Date</FieldLabel>
+									<FieldLabel htmlFor="applied">{t("new.date")}</FieldLabel>
 									<Input
 										id="applied"
 										type="date"
@@ -116,7 +118,7 @@ export default function NewApplicationPage() {
 									/>
 								</Field>
 								<Field>
-									<FieldLabel>Stage</FieldLabel>
+									<FieldLabel>{t("new.stage")}</FieldLabel>
 									<Select value={statusValue} onValueChange={(v) => setStatusValue(v as ApplicationStatus)}>
 										<SelectTrigger className="w-full">
 											<SelectValue />
@@ -124,7 +126,7 @@ export default function NewApplicationPage() {
 										<SelectContent>
 											{APPLICATION_STATUSES.map((s) => (
 												<SelectItem key={s} value={s}>
-													{STATUS_META[s].label}
+													{t(STATUS_META[s].label)}
 												</SelectItem>
 											))}
 										</SelectContent>
@@ -136,11 +138,11 @@ export default function NewApplicationPage() {
 					</CardContent>
 					<CardFooter className="justify-end gap-2 border-t bg-muted/30 py-3">
 						<Button type="button" variant="ghost" onClick={() => router.back()}>
-							Cancel
+							{t("common.cancel")}
 						</Button>
 						<Button type="submit" disabled={submitting}>
 							{submitting && <Spinner />}
-							Save application
+							{t("new.save")}
 						</Button>
 					</CardFooter>
 				</Card>

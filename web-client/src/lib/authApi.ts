@@ -1,3 +1,5 @@
+import type { TKey } from "@/i18n/dictionaries";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function post(path: string, body: unknown): Promise<void> {
@@ -20,18 +22,18 @@ async function post(path: string, body: unknown): Promise<void> {
 	}
 }
 
-const AUTH_MESSAGES: Record<string, string> = {
-	INVALID_OR_EXPIRED_TOKEN: "This link is invalid or has expired. Request a new one.",
-	VALIDATION_ERROR: "Please check your details. Passwords need at least 8 characters.",
-	USER_NOT_FOUND: "We couldn't find that account.",
-	INVALID_CREDENTIALS: "That email and password don't match.",
-	EMAIL_NOT_VERIFIED: "Please verify your email first — check your inbox.",
-};
+const AUTH_CODES = [
+	"INVALID_OR_EXPIRED_TOKEN",
+	"VALIDATION_ERROR",
+	"USER_NOT_FOUND",
+	"INVALID_CREDENTIALS",
+	"EMAIL_NOT_VERIFIED",
+] as const;
 
-/** Turn an auth API error into a sentence people can act on. */
-export function authErrorMessage(e: unknown): string {
+/** Dictionary key for an auth API error, so pages can show it in the user's language. */
+export function authErrorKey(e: unknown): TKey {
 	const code = e instanceof Error ? e.message : "";
-	return AUTH_MESSAGES[code] ?? "Something went wrong. Please try again.";
+	return (AUTH_CODES as readonly string[]).includes(code) ? (`auth.err.${code}` as TKey) : "auth.err.GENERIC";
 }
 
 export const authApi = {

@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { authApi, authErrorMessage } from "@/lib/authApi";
+import { useI18n } from "@/i18n/client";
+import { authApi, authErrorKey } from "@/lib/authApi";
 
 export default function RegisterPage() {
+	const { t } = useI18n();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirm, setConfirm] = useState("");
@@ -22,14 +24,14 @@ export default function RegisterPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
-		if (password.length < 8) return setError("Your password needs at least 8 characters.");
-		if (password !== confirm) return setError("The passwords don't match.");
+		if (password.length < 8) return setError(t("auth.tooShort"));
+		if (password !== confirm) return setError(t("auth.mismatch"));
 		setSubmitting(true);
 		try {
 			await authApi.register(email, password);
 			setSubmitted(true);
 		} catch (err) {
-			setError(authErrorMessage(err));
+			setError(t(authErrorKey(err)));
 		} finally {
 			setSubmitting(false);
 		}
@@ -42,16 +44,11 @@ export default function RegisterPage() {
 					<MailCheckIcon className="size-6" />
 				</span>
 				<AuthHeading
-					title="Check your inbox"
-					description={
-						<>
-							We sent a verification link to <span className="font-medium text-foreground">{email}</span>. Click it to
-							activate your account.
-						</>
-					}
+					title={t("auth.checkInbox")}
+					description={t("register.sent", { email })}
 				/>
 				<Button asChild variant="outline" className="w-full">
-					<Link href="/login">Back to sign in</Link>
+					<Link href="/login">{t("auth.backToSignIn")}</Link>
 				</Button>
 			</div>
 		);
@@ -59,11 +56,11 @@ export default function RegisterPage() {
 
 	return (
 		<div className="flex flex-col gap-5">
-			<AuthHeading title="Create your account" description="Start with free daily analyses — no card needed." />
+			<AuthHeading title={t("register.title")} description={t("register.subtitle")} />
 			<form onSubmit={onSubmit}>
 				<FieldGroup>
 					<Field>
-						<FieldLabel htmlFor="email">Email</FieldLabel>
+						<FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
 						<Input
 							id="email"
 							type="email"
@@ -71,11 +68,11 @@ export default function RegisterPage() {
 							required
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							placeholder="you@example.com"
+							placeholder={t("auth.emailPlaceholder")}
 						/>
 					</Field>
 					<Field>
-						<FieldLabel htmlFor="password">Password</FieldLabel>
+						<FieldLabel htmlFor="password">{t("auth.password")}</FieldLabel>
 						<Input
 							id="password"
 							type="password"
@@ -84,10 +81,10 @@ export default function RegisterPage() {
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 						/>
-						<FieldDescription>At least 8 characters.</FieldDescription>
+						<FieldDescription>{t("auth.passwordHint")}</FieldDescription>
 					</Field>
 					<Field>
-						<FieldLabel htmlFor="confirm">Confirm password</FieldLabel>
+						<FieldLabel htmlFor="confirm">{t("auth.confirmPassword")}</FieldLabel>
 						<Input
 							id="confirm"
 							type="password"
@@ -100,14 +97,14 @@ export default function RegisterPage() {
 					{error && <AuthNotice kind="error">{error}</AuthNotice>}
 					<Button type="submit" size="lg" disabled={submitting} className="w-full">
 						{submitting && <Spinner />}
-						Create account
+						{t("register.submit")}
 					</Button>
 				</FieldGroup>
 			</form>
 			<p className="text-center text-sm text-muted-foreground">
-				Already have an account?{" "}
+				{t("register.haveAccount")}{" "}
 				<Link href="/login" className="font-medium text-primary hover:underline">
-					Sign in
+					{t("register.signIn")}
 				</Link>
 			</p>
 		</div>

@@ -3,6 +3,7 @@
 import {
 	ChevronsUpDownIcon,
 	CoinsIcon,
+	InfinityIcon,
 	KanbanSquareIcon,
 	LayoutDashboardIcon,
 	ListIcon,
@@ -39,19 +40,22 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import type { TKey } from "@/i18n/dictionaries";
 import { useBilling } from "@/lib/billing";
+import { useI18n } from "@/i18n/client";
 
-const NAV = [
-	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-	{ href: "/applications", label: "Applications", icon: ListIcon },
-	{ href: "/applications?view=board", label: "Pipeline board", icon: KanbanSquareIcon },
-	{ href: "/billing", label: "Credits & billing", icon: CoinsIcon },
+const NAV: { href: string; label: TKey; icon: typeof ListIcon }[] = [
+	{ href: "/dashboard", label: "nav.dashboard", icon: LayoutDashboardIcon },
+	{ href: "/applications", label: "nav.applications", icon: ListIcon },
+	{ href: "/applications?view=board", label: "nav.board", icon: KanbanSquareIcon },
+	{ href: "/billing", label: "nav.billing", icon: CoinsIcon },
 ];
 
 export function AppSidebar() {
 	const pathname = usePathname();
 	const board = useSearchParams().get("view") === "board";
 	const { setOpenMobile } = useSidebar();
+	const { t } = useI18n();
 
 	return (
 		<Sidebar collapsible="icon" variant="inset">
@@ -69,12 +73,12 @@ export function AppSidebar() {
 							<SidebarMenuItem>
 								<SidebarMenuButton
 									asChild
-									tooltip="New application"
+									tooltip={t("nav.newApplication")}
 									className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
 								>
 									<Link href="/applications/new" onClick={() => setOpenMobile(false)}>
 										<PlusIcon />
-										<span>New application</span>
+										<span>{t("nav.newApplication")}</span>
 									</Link>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
@@ -83,7 +87,7 @@ export function AppSidebar() {
 				</SidebarGroup>
 
 				<SidebarGroup>
-					<SidebarGroupLabel>Workspace</SidebarGroupLabel>
+					<SidebarGroupLabel>{t("nav.workspace")}</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{NAV.map((item) => {
@@ -96,10 +100,10 @@ export function AppSidebar() {
 										: pathname.startsWith(path);
 								return (
 									<SidebarMenuItem key={item.href}>
-										<SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+										<SidebarMenuButton asChild isActive={active} tooltip={t(item.label)}>
 											<Link href={item.href} onClick={() => setOpenMobile(false)}>
 												<item.icon />
-												<span>{item.label}</span>
+												<span>{t(item.label)}</span>
 											</Link>
 										</SidebarMenuButton>
 									</SidebarMenuItem>
@@ -120,13 +124,25 @@ export function AppSidebar() {
 
 function CreditsCard() {
 	const { billing } = useBilling();
+	const { t } = useI18n();
 	if (!billing) return null;
+	if (billing.unlimited) {
+		return (
+			<div className="rounded-lg border bg-card p-3 text-sm group-data-[collapsible=icon]:hidden">
+				<span className="flex items-center gap-1.5 font-medium">
+					<InfinityIcon className="size-4 text-primary" />
+					{t("sidebar.unlimited")}
+				</span>
+				<p className="mt-1 text-xs text-muted-foreground">{t("sidebar.unlimitedHint")}</p>
+			</div>
+		);
+	}
 	return (
 		<div className="rounded-lg border bg-card p-3 text-sm group-data-[collapsible=icon]:hidden">
 			<div className="flex items-center justify-between">
 				<span className="flex items-center gap-1.5 font-medium">
 					<SparklesIcon className="size-3.5 text-primary" />
-					Free credit today
+					{t("sidebar.freeCreditToday")}
 				</span>
 				<span className="font-mono text-xs tabular-nums text-muted-foreground">
 					{billing.daily_credit_left}/{billing.daily_credit}
@@ -138,10 +154,11 @@ function CreditsCard() {
 			/>
 			<div className="mt-3 flex items-center justify-between">
 				<span className="text-muted-foreground">
-					<span className="font-semibold tabular-nums text-foreground">{billing.credits}</span> credits
+					<span className="font-semibold tabular-nums text-foreground">{billing.credits}</span>{" "}
+					{t("sidebar.credits")}
 				</span>
 				<Button asChild size="xs" variant="outline">
-					<Link href="/billing">Top up</Link>
+					<Link href="/billing">{t("sidebar.topUp")}</Link>
 				</Button>
 			</div>
 		</div>
@@ -151,6 +168,7 @@ function CreditsCard() {
 function UserMenu() {
 	const { data } = useSession();
 	const { isMobile } = useSidebar();
+	const { t } = useI18n();
 	const user = data?.user;
 	if (!user) return null;
 	const initials = (user.name ?? user.email ?? "?")
@@ -173,7 +191,7 @@ function UserMenu() {
 								</AvatarFallback>
 							</Avatar>
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">{user.name ?? "Your account"}</span>
+								<span className="truncate font-medium">{user.name ?? t("user.account")}</span>
 								<span className="truncate text-xs text-muted-foreground">{user.email}</span>
 							</div>
 							<ChevronsUpDownIcon className="ml-auto size-4" />
@@ -191,12 +209,12 @@ function UserMenu() {
 						<DropdownMenuItem asChild>
 							<Link href="/billing">
 								<CoinsIcon />
-								Credits & billing
+								{t("nav.billing")}
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
 							<LogOutIcon />
-							Sign out
+							{t("user.signOut")}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

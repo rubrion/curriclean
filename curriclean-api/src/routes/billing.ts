@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { Env, HonoVariables } from "../types";
 import { jwtMiddleware } from "../lib/auth";
-import { creditLeft, dailyCredit, Pack, PACKS, PRICES } from "../services/credits";
+import { creditLeft, dailyCredit, isUnlimited, Pack, PACKS, PRICES } from "../services/credits";
 import { openCheckout, stripeConfigured } from "../services/stripe";
 
 const billing = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
@@ -12,8 +12,12 @@ billing.use("*", jwtMiddleware());
 
 billing.get("/", async (c) => {
   const userId = c.get("userId");
-  const { daily, wallet } = await creditLeft(c.env, userId);
+  const [{ daily, wallet }, unlimited] = await Promise.all([
+    creditLeft(c.env, userId),
+    isUnlimited(c.env, userId),
+  ]);
   return c.json({
+    unlimited,
     credits: wallet,
     daily_credit_left: daily,
     daily_credit: dailyCredit(c.env),

@@ -103,6 +103,15 @@ const JSON_SCHEMAS = {
   },
 } as const;
 
+// ── Output language ───────────────────────────────────────────────────────────
+
+export type Language = "en" | "pt";
+
+const LANGUAGE_RULE: Record<Language, string> = {
+  en: "Write every text value in English.",
+  pt: "Write every text value in Brazilian Portuguese (pt-BR), even if the job description or CV is in another language. Keep JSON keys in English.",
+};
+
 // ── Workers AI call with schema-constrained output ───────────────────────────
 
 export interface LlmRun<T> {
@@ -178,11 +187,11 @@ async function runStructured<T>(
 
 // ── Public entrypoints ────────────────────────────────────────────────────────
 
-export function runMatch(env: Env, jobDescription: string, cvText: string) {
+export function runMatch(env: Env, jobDescription: string, cvText: string, language: Language) {
   return runStructured(
     env,
     "match",
-    MATCH_PROMPT,
+    `${MATCH_PROMPT}\n${LANGUAGE_RULE[language]}`,
     `JOB DESCRIPTION:\n${jobDescription}\n\nCANDIDATE CV:\n${cvText}`,
     MatchAnalysisSchema
   );
@@ -192,12 +201,13 @@ export function runTailor(
   env: Env,
   jobDescription: string,
   cvText: string,
-  gaps: string[]
+  gaps: string[],
+  language: Language
 ) {
   return runStructured(
     env,
     "tailor",
-    TAILOR_PROMPT,
+    `${TAILOR_PROMPT}\n${LANGUAGE_RULE[language]}`,
     `JOB DESCRIPTION:\n${jobDescription}\n\nCANDIDATE CV:\n${cvText}\n\nGAPS FOUND:\n${gaps
       .map((g) => `- ${g}`)
       .join("\n")}`,
