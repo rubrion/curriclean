@@ -13,6 +13,6 @@ Paste a job description and your CV to receive a structured fit score, matched s
 | Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
 | LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`@cf/google/gemma-4-26b-a4b-it`) |
 | Frontend | [Cloudflare Workers](https://workers.cloudflare.com) via `@opennextjs/cloudflare` (Next.js 16) |
-| Email | [Resend](https://resend.com) |
+| Email | [Cloudflare Email Service](https://developers.cloudflare.com/email-service/) (Email Sending from `curriclean.com`) |
 
 Repository: [github.com/rubrion/curriclean](https://github.com/rubrion/curriclean)

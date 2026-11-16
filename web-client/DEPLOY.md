@@ -33,13 +33,12 @@ Both the backend (`curriclean-api/`) and the web client (`web-client/`) deploy t
    ```bash
    wrangler secret put JWT_SECRET           # HS256 signing secret for access tokens
    wrangler secret put AUTH_SHARED_SECRET   # X-Auth-Secret for OAuth upsert; must match the frontend
-   wrangler secret put RESEND_API_KEY       # Resend transactional email
    # Optional: Stripe credit packs (checkout stays disabled without them)
    wrangler secret put STRIPE_SECRET_KEY
    wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
 
-5. **Resend.** Sign up at [resend.com](https://resend.com) and verify a sending domain (or use `onboarding@resend.dev` for dev). Set `FRONTEND_URL` in `wrangler.jsonc → vars` to your frontend Worker URL so verify/reset links are correct.
+5. **Email.** Verification and reset emails go out through Cloudflare Email Service (the `EMAIL` binding in `wrangler.jsonc`). `curriclean.com` is onboarded for Email Sending; no secret is needed. Set `FRONTEND_URL` in `wrangler.jsonc → vars` so the links point at the frontend.
 
 6. **OAuth (optional).** Create Google and/or GitHub OAuth apps. Callback URLs:
    - Local: `http://localhost:3000/api/auth/callback/google` and `/github`
@@ -151,7 +150,7 @@ Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/w
 **Backend** (`curriclean-api/`):
 - Build command: `bun run deploy`
 - Build directory: `curriclean-api/`
-- Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`, `RESEND_API_KEY`
+- Secrets: `JWT_SECRET`, `AUTH_SHARED_SECRET`
 
 **Frontend** (`web-client/`):
 - Build command: `npm run deploy`
@@ -167,7 +166,7 @@ After deploy, hit:
 
 - `https://<host>/` → redirects to `/login` if not signed in, otherwise `/applications`.
 - `GET https://<api-host>/health` → `{"status":"ok"}`.
-- `/register` → submit a real email → Resend mail arrives → click verify → `/login?verified=1`.
+- `/register` → submit a real email → verification email arrives → click verify → `/login?verified=1`.
 - `/login` → enter creds → land on `/applications`.
 - Network tab → backend requests carry `Authorization: Bearer <jwt>`.
 - Hit the daily token cap → next `/match` returns `429 DAILY_TOKEN_LIMIT`.

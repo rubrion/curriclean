@@ -10,7 +10,6 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 |-----|----------|-------|
 | `JWT_SECRET` | yes | HS256 signing secret for access tokens |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) | Server-to-server secret for `/auth/oauth-upsert`; must match the frontend |
-| `RESEND_API_KEY` | yes | Transactional email (verify + reset) |
 | `STRIPE_SECRET_KEY` | no | Stripe API key; checkout is disabled unless all three Stripe values are set |
 | `STRIPE_WEBHOOK_SECRET` | no | Signing secret of the `/stripe/webhook` endpoint |
 
@@ -21,6 +20,8 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `DAILY_TOKEN_BUDGET` | `50000` | Per-user daily token safety cap across all LLM calls |
 | `CV_PDF_MAX_BYTES` | `5242880` | Max PDF upload size (5 MB) |
 | `FRONTEND_URL` | `http://localhost:3000` | Origin used in verify/reset email links and CORS |
+| `EMAIL_FROM` | `no-reply@curriclean.com` | Sender for verify/reset emails; its domain must be onboarded for Cloudflare Email Sending |
+| `UNLIMITED_FOR` | `samuel@rubrion.ai` | Comma-separated emails whose AI runs never spend credits |
 | `FREE_DAILY_CREDITS` | `3` | Free credit per account per UTC day, spent before the prepaid wallet |
 | `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key (sent to the browser for embedded Checkout) |
 
@@ -31,6 +32,7 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `DB` | D1 | Primary SQLite database (`curriclean`) |
 | `BUDGET_KV` | KV | Daily token budget cache (`curriclean-budget-kv`) |
 | `AI` | Workers AI | LLM inference — no key needed |
+| `EMAIL` | send_email | Cloudflare Email Service — verification and reset emails from `EMAIL_FROM` |
 
 ---
 

@@ -71,11 +71,11 @@ export interface Env {
   DB: D1Database;
   BUDGET_KV: KVNamespace;
   AI: Ai;
+  EMAIL: SendEmail;
 
   // Secrets (set via wrangler secret put)
   JWT_SECRET: string;
   AUTH_SHARED_SECRET: string;
-  RESEND_API_KEY: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
 

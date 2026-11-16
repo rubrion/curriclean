@@ -9,7 +9,7 @@
 - **Caching**: SHA-256 of `(model, job_description, cv_text)` stored on the application; same inputs return the saved result for free, `?force=true` regenerates
 - **Metering**: like Rubry, every account gets a daily free credit (`FREE_DAILY_CREDITS`, default 3) that refills at midnight UTC. Actions are priced in credits (analysis = 1, tailored CV = 2); the free credit is spent first and the rest comes out of the prepaid wallet. A global `DAILY_TOKEN_BUDGET` caps abuse
 - **Payments**: Stripe embedded Checkout via the REST API (no SDK); signed webhook credits each pack once, refunds/disputes take credits back
-- **Auth**: hand-rolled HS256 JWT (WebCrypto) + bcrypt; verify/reset email via Resend
+- **Auth**: hand-rolled HS256 JWT (WebCrypto) + bcrypt; verify/reset email via Cloudflare Email Service (`send_email` binding, sender `no-reply@curriclean.com`, EN/PT by Accept-Language)
 - **PDF**: `unpdf` text extraction (CV text is never stored)
 
 ## Frontend (`web-client/`)

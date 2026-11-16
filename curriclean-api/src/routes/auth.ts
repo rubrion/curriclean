@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Env, HonoVariables, UserOut, UserRow } from "../types";
 import { signJwt, safeCompare } from "../lib/auth";
 import { hashPassword, verifyPassword } from "../lib/password";
-import { sendVerifyEmail, sendResetEmail, EmailError } from "../lib/email";
+import { sendVerifyEmail, sendResetEmail, EmailError, emailLang } from "../lib/email";
 
 const auth = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -111,13 +111,7 @@ auth.post("/register", async (c) => {
 
   const token = await mintToken(c.env.DB, `verify:${email}`);
   try {
-    await sendVerifyEmail({
-      apiKey: c.env.RESEND_API_KEY,
-      from: c.env.EMAIL_FROM,
-      to: email,
-      token,
-      frontendUrl: c.env.FRONTEND_URL,
-    });
+    await sendVerifyEmail(c.env, email, token, emailLang(c.req.header("Accept-Language")));
   } catch (err) {
     console.error("[email] verify send failed:", err instanceof EmailError ? err.message : err);
   }
@@ -212,13 +206,7 @@ auth.post("/forgot", async (c) => {
   if (user) {
     const token = await mintToken(c.env.DB, `reset:${email}`);
     try {
-      await sendResetEmail({
-        apiKey: c.env.RESEND_API_KEY,
-        from: c.env.EMAIL_FROM,
-        to: email,
-        token,
-        frontendUrl: c.env.FRONTEND_URL,
-      });
+      await sendResetEmail(c.env, email, token, emailLang(c.req.header("Accept-Language")));
     } catch (err) {
       console.error("[email] reset send failed:", err instanceof EmailError ? err.message : err);
     }

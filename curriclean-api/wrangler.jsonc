@@ -52,10 +52,16 @@
 	"ai": { "binding": "AI" },
 
 	/**
+	 * Cloudflare Email Service — verification and password-reset emails.
+	 * curriclean.com is onboarded for Email Sending (SPF/DKIM/DMARC managed by
+	 * Cloudflare). `remote` makes `wrangler dev` send real email.
+	 */
+	"send_email": [{ "name": "EMAIL", "remote": true }],
+
+	/**
 	 * Secrets — set via: wrangler secret put <NAME>
 	 *   JWT_SECRET          — HS256 signing secret for access tokens
 	 *   AUTH_SHARED_SECRET  — server-to-server OAuth upsert secret
-	 *   RESEND_API_KEY      — Resend transactional email
 	 *   STRIPE_SECRET_KEY     — Stripe API key (credit packs)
 	 *   STRIPE_WEBHOOK_SECRET — signing secret of the /stripe/webhook endpoint
 	 */
@@ -67,7 +73,7 @@
 		"DAILY_TOKEN_BUDGET": "50000",
 		"CV_PDF_MAX_BYTES": "5242880",
 		"FRONTEND_URL": "https://curriclean.com",
-		"EMAIL_FROM": "CurriClean <curriclean@rubrion.ai>",
+		"EMAIL_FROM": "no-reply@curriclean.com",
 		"FREE_DAILY_CREDITS": "3",
 		"UNLIMITED_FOR": "samuel@rubrion.ai",
 		"STRIPE_PUBLISHABLE_KEY": "pk_test_51USlebQtpVVMufZy1dTBTIVsQyGJ9YJVbYn9DvISnBvlq1ibUMfgeFGIsRS5439uGIVPb6jp5qgoc77xwsHdXExu00TT5RghzL"

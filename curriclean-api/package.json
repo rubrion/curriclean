@@ -10,7 +10,6 @@
 	"dependencies": {
 		"bcryptjs": "^3.0.3",
 		"hono": "^4.12.23",
-		"resend": "^6.12.4",
 		"unpdf": "^1.6.2",
 		"zod": "^4.4.3"
 	},

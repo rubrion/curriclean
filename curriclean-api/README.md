@@ -15,7 +15,7 @@ Built with [Hono](https://hono.dev), [Cloudflare D1](https://developers.cloudfla
 | Token budget cache | Workers KV |
 | LLM inference | Workers AI (`@cf/google/gemma-4-26b-a4b-it`, JSON schema + zod) |
 | Payments | Stripe (prepaid credit packs) |
-| Email | Resend |
+| Email | Cloudflare Email Service (`send_email` binding) |
 
 ---
 
@@ -74,7 +74,6 @@ bun run dev
 ```bash
 wrangler secret put JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
-wrangler secret put RESEND_API_KEY
 # Optional: Stripe credit packs (checkout stays disabled without them)
 wrangler secret put STRIPE_SECRET_KEY
 wrangler secret put STRIPE_WEBHOOK_SECRET

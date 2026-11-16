@@ -10,7 +10,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 - **LLM match analysis** — paste/upload CV → structured fit score, strengths, gaps, interview questions. Results cached per `(model, job_description, cv_text)` hash; re-run with `?force=true`.
 - **People to reach out to** — one-click LinkedIn and Google searches for people in the role, recruiters and employees at the company (no search API needed)
 - **Status tracking** — `saved` → `applied` → `interviewing` → `offer` / `rejected` / `withdrawn`.
-- **Authentication** — email + password (Resend-verified, bcrypt) and optional Google / GitHub OAuth. The backend issues HS256 bearer JWTs; the frontend uses Auth.js with the same secret.
+- **Authentication** — email + password (email-verified, bcrypt) and optional Google / GitHub OAuth. The backend issues HS256 bearer JWTs; the frontend uses Auth.js with the same secret.
 - **Per-user daily token budget** — every `/match` call deducts from a daily cap tracked in `token_usage`; over-cap returns `429 DAILY_TOKEN_LIMIT`. Budget reads are KV-first for ~1 ms edge latency.
 
 ## Platform
@@ -22,7 +22,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 | Token budget cache | [Cloudflare Workers KV](https://developers.cloudflare.com/kv/) |
 | LLM inference | [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/) (`@cf/google/gemma-4-26b-a4b-it`) |
 | Frontend runtime | [Cloudflare Workers](https://workers.cloudflare.com) via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) (Next.js 16) |
-| Transactional email | [Resend](https://resend.com) (verify + password-reset) |
+| Transactional email | [Cloudflare Email Service](https://developers.cloudflare.com/email-service/) (verify + password-reset, EN/PT) |
 
 ## Stack
 
@@ -33,7 +33,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 - **Runtime**: Cloudflare Workers
 - **Database**: Cloudflare D1 (SQLite) — plain SQL migrations, no ORM
 - **Auth**: own credentials store with `bcryptjs` hashes, verify/reset tokens, OAuth upsert endpoint; HS256 JWT issued by the Worker via Web Crypto
-- **Email**: Resend SDK
+- **Email**: Cloudflare Email Service `send_email` binding (no API key)
 - **LLM**: Cloudflare Workers AI with JSON-schema output validated by zod
 - **Billing**: free daily runs + prepaid Stripe credit packs
 - **Caching**: SHA-256 hash of `(model, job_description, cv_text)` against `analysis_hash`; bypass with `?force=true`
@@ -96,7 +96,6 @@ See [environment-variables.md](environment-variables.md) for the full reference.
 |-----|----------|
 | `JWT_SECRET` | yes |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) |
-| `RESEND_API_KEY` | yes |
 | `STRIPE_SECRET_KEY` | no |
 | `STRIPE_WEBHOOK_SECRET` | no |
 
