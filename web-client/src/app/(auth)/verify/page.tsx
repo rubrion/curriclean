@@ -1,63 +1,76 @@
 "use client";
 
+import { CheckCircle2Icon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import { authApi } from "@/lib/authApi";
+import { AuthHeading } from "@/components/AuthForm";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { authApi, authErrorMessage } from "@/lib/authApi";
 
 export default function VerifyPage() {
 	return (
-		<Suspense fallback={<div className="font-mono text-sm text-[#64748b]">Loading…</div>}>
+		<Suspense>
 			<VerifyInner />
 		</Suspense>
 	);
 }
 
 function VerifyInner() {
+	const token = useSearchParams().get("token");
+	if (!token) return <Failed message="This verification link is incomplete. Open the link from your email again." />;
+	return <VerifyToken token={token} />;
+}
+
+function VerifyToken({ token }: { token: string }) {
 	const router = useRouter();
-	const params = useSearchParams();
-	const token = params.get("token");
-	const [state, setState] = useState<"pending" | "ok" | "fail">("pending");
-	const [message, setMessage] = useState<string | null>(null);
+	const [state, setState] = useState<{ status: "pending" | "ok" | "fail"; message?: string }>({
+		status: "pending",
+	});
 
 	useEffect(() => {
-		if (!token) {
-			setState("fail");
-			setMessage("Missing token.");
-			return;
-		}
 		authApi
 			.verify(token)
 			.then(() => {
-				setState("ok");
+				setState({ status: "ok" });
 				setTimeout(() => router.push("/login?verified=1"), 1200);
 			})
-			.catch((e: unknown) => {
-				setState("fail");
-				setMessage(e instanceof Error ? e.message : "Verification failed.");
-			});
+			.catch((e: unknown) => setState({ status: "fail", message: authErrorMessage(e) }));
 	}, [token, router]);
 
+	if (state.status === "fail") return <Failed message={state.message} />;
+
 	return (
-		<div className="flex flex-col gap-4">
-			<h1 className="text-2xl font-semibold tracking-tight">Email verification</h1>
-			{state === "pending" && (
-				<div className="font-mono text-sm text-[#64748b]">Verifying…</div>
+		<div className="flex flex-col items-center gap-4 text-center">
+			{state.status === "pending" ? (
+				<>
+					<Spinner className="size-8 text-primary" />
+					<AuthHeading title="Verifying your email…" />
+				</>
+			) : (
+				<>
+					<span className="flex size-12 items-center justify-center rounded-full bg-success-soft text-success">
+						<CheckCircle2Icon className="size-6" />
+					</span>
+					<AuthHeading title="You're verified!" description="Taking you to sign in…" />
+				</>
 			)}
-			{state === "ok" && (
-				<div className="font-mono text-sm">Verified. Redirecting to sign in…</div>
-			)}
-			{state === "fail" && (
-				<div className="flex flex-col gap-3">
-					<div className="border border-[#fafafa] p-3 font-mono text-sm">
-						{message ?? "Verification failed."}
-					</div>
-					<Link href="/login" className="font-mono text-xs underline">
-						Back to sign in
-					</Link>
-				</div>
-			)}
+		</div>
+	);
+}
+
+function Failed({ message }: { message?: string }) {
+	return (
+		<div className="flex flex-col items-center gap-4 text-center">
+			<span className="flex size-12 items-center justify-center rounded-full bg-danger-soft text-danger">
+				<XCircleIcon className="size-6" />
+			</span>
+			<AuthHeading title="We couldn't verify your email" description={message} />
+			<Button asChild variant="outline" className="w-full">
+				<Link href="/login">Back to sign in</Link>
+			</Button>
 		</div>
 	);
 }

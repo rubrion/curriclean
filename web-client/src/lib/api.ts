@@ -1,5 +1,10 @@
 import type {
 	Application,
+	ApplicationStats,
+	BillingInfo,
+	LedgerEntry,
+	PaymentStatus,
+	TailorResponse,
 	ApplicationCreate,
 	ApplicationStatus,
 	ApplicationUpdate,
@@ -36,10 +41,12 @@ async function request<T>(
 	};
 	if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
 
-	const res = await fetch(`${API_URL}${path}`, {
-		...init,
-		headers,
-	});
+	let res: Response;
+	try {
+		res = await fetch(`${API_URL}${path}`, { ...init, headers });
+	} catch {
+		throw new ApiError(0, "Network error", "NETWORK_ERROR");
+	}
 
 	if (!res.ok) {
 		let detail: unknown = undefined;
@@ -49,11 +56,7 @@ async function request<T>(
 		} catch {
 			detail = await res.text().catch(() => undefined);
 		}
-		throw new ApiError(
-			res.status,
-			`Request failed: ${res.status} ${res.statusText}`,
-			detail,
-		);
+		throw new ApiError(res.status, `Request failed: ${res.status}`, detail);
 	}
 
 	if (res.status === 204) return undefined as T;
@@ -111,6 +114,45 @@ export const api = {
 		});
 	},
 
+	tailorCv(
+		bearer: string | null | undefined,
+		id: string,
+		cvText: string,
+		force = false,
+	): Promise<TailorResponse> {
+		const qs = force ? "?force=true" : "";
+		return request<TailorResponse>(`/applications/${id}/tailor${qs}`, bearer, {
+			method: "POST",
+			body: JSON.stringify({ cv_text: cvText }),
+		});
+	},
+
+	getStats(bearer: string | null | undefined): Promise<ApplicationStats> {
+		return request<ApplicationStats>(`/applications/stats`, bearer);
+	},
+
+	getBilling(bearer: string | null | undefined): Promise<BillingInfo> {
+		return request<BillingInfo>(`/billing`, bearer);
+	},
+
+	createCheckout(
+		bearer: string | null | undefined,
+		pack: string,
+	): Promise<{ client_secret: string; ref: string }> {
+		return request(`/billing/checkout`, bearer, {
+			method: "POST",
+			body: JSON.stringify({ pack }),
+		});
+	},
+
+	getPayment(bearer: string | null | undefined, ref: string): Promise<PaymentStatus> {
+		return request<PaymentStatus>(`/billing/payments/${encodeURIComponent(ref)}`, bearer);
+	},
+
+	getLedger(bearer: string | null | undefined): Promise<LedgerEntry[]> {
+		return request<LedgerEntry[]>(`/billing/history`, bearer);
+	},
+
 	async parseCvPdf(
 		bearer: string | null | undefined,
 		file: File,
@@ -133,11 +175,7 @@ export const api = {
 			} catch {
 				detail = await res.text().catch(() => undefined);
 			}
-			throw new ApiError(
-				res.status,
-				`PDF parse failed: ${res.status} ${res.statusText}`,
-				detail,
-			);
+			throw new ApiError(res.status, `PDF parse failed: ${res.status}`, detail);
 		}
 		return (await res.json()) as CvParseResponse;
 	},

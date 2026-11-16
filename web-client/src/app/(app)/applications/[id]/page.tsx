@@ -1,157 +1,237 @@
 "use client";
 
+import { ArrowLeftIcon, CalendarIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { toast } from "sonner";
 
+import { CompanyAvatar } from "@/components/CompanyAvatar";
+import { CvInput } from "@/components/CvInput";
+import { ErrorAlert } from "@/components/ErrorAlert";
 import { MatchPanel } from "@/components/MatchPanel";
-import { StatusBadge } from "@/components/StatusBadge";
 import { SuggestedProfilesPanel } from "@/components/SuggestedProfilesPanel";
-import { api, ApiError } from "@/lib/api";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { TailorPanel } from "@/components/TailorPanel";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	APPLICATION_STATUSES,
-	type Application,
-	type ApplicationStatus,
-	type MatchResponse,
-} from "@/lib/types";
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/lib/api";
+import { toFriendlyError } from "@/lib/errors";
+import { formatDate, STATUS_META } from "@/lib/format";
+import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from "@/lib/types";
+import { useApiQuery } from "@/lib/useApiQuery";
 import { useBearer } from "@/lib/useBearer";
+import { cn } from "@/lib/utils";
 
-export default function ApplicationDetailPage({
-	params,
-}: {
-	params: Promise<{ id: string }>;
-}) {
+export default function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = use(params);
+	const router = useRouter();
 	const bearer = useBearer();
-	const [app, setApp] = useState<Application | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (!bearer) return;
-		let cancelled = false;
-		setLoading(true);
-		setError(null);
-		api
-			.getApplication(bearer, id)
-			.then((a) => {
-				if (!cancelled) setApp(a);
-			})
-			.catch((e: unknown) => {
-				if (cancelled) return;
-				const msg = e instanceof ApiError ? e.message : "Failed to load application.";
-				setError(msg);
-			})
-			.finally(() => {
-				if (!cancelled) setLoading(false);
-			});
-		return () => {
-			cancelled = true;
-		};
-	}, [id, bearer]);
+	const { data: app, error, reload: load, setData: setApp } = useApiQuery<Application>(id, (b) =>
+		api.getApplication(b, id),
+	);
+	// CV text lives only in memory: shared by the Match and Tailor tabs, never stored.
+	const [cvText, setCvText] = useState("");
+	const [confirmDelete, setConfirmDelete] = useState(false);
 
 	async function changeStatus(s: ApplicationStatus) {
 		if (!app || !bearer) return;
+		const prev = app;
+		setApp({ ...app, status: s });
 		try {
-			const updated = await api.updateApplication(bearer, app.id, { status: s });
-			setApp(updated);
-		} catch (e: unknown) {
-			setError(e instanceof ApiError ? e.message : "Failed to update status.");
+			setApp(await api.updateApplication(bearer, app.id, { status: s }));
+			toast.success(`Moved to ${STATUS_META[s].label}`);
+		} catch (e) {
+			setApp(prev);
+			toast.error(toFriendlyError(e).title);
 		}
 	}
 
-	function onMatchResult(r: MatchResponse) {
-		setApp((prev) =>
-			prev
-				? {
-						...prev,
-						analysis: { analysis: r.analysis, metrics: r.metrics },
-						analysis_hash: r.metrics.cache_key,
-						analysis_updated_at: r.updated_at,
-					}
-				: prev,
+	async function onDelete() {
+		if (!app || !bearer) return;
+		try {
+			await api.deleteApplication(bearer, app.id);
+			toast.success("Application deleted");
+			router.push("/applications");
+		} catch (e) {
+			toast.error(toFriendlyError(e).title);
+		}
+	}
+
+	if (error && !app) {
+		return (
+			<div className="mx-auto flex max-w-xl flex-col gap-4 pt-10">
+				<ErrorAlert error={error} onRetry={load} />
+				<Button asChild variant="outline" className="self-start">
+					<Link href="/applications">
+						<ArrowLeftIcon />
+						Back to applications
+					</Link>
+				</Button>
+			</div>
 		);
 	}
 
-	if (loading) return <div className="font-mono text-sm text-[#64748b]">Loading…</div>;
-	if (error)
-		return (
-			<div className="flex flex-col gap-4">
-				<div className="border border-[#fafafa] p-4 font-mono text-sm">{error}</div>
-				<Link href="/applications" className="font-mono text-xs underline">
-					← Back
-				</Link>
-			</div>
-		);
-	if (!app) return null;
-
-	const initialResult: MatchResponse | null = app.analysis
-		? {
-				application_id: app.id,
-				analysis: app.analysis.analysis,
-				metrics: { ...app.analysis.metrics, cached: true },
-				updated_at: app.analysis_updated_at ?? app.updated_at,
-			}
-		: null;
+	if (!app) return <DetailSkeleton />;
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-3">
-				<Link href="/applications" className="font-mono text-xs text-[#64748b] hover:underline">
-					← Applications
-				</Link>
+				<Button asChild variant="ghost" size="sm" className="self-start text-muted-foreground">
+					<Link href="/applications">
+						<ArrowLeftIcon />
+						Applications
+					</Link>
+				</Button>
 				<div className="flex flex-wrap items-start justify-between gap-4">
-					<div className="flex flex-col gap-1">
-						<h1 className="text-2xl font-semibold tracking-tight">{app.title}</h1>
-						<div className="font-mono text-sm text-[#64748b]">
-							{app.company} • applied {formatDate(app.applied_at)}
+					<div className="flex min-w-0 items-center gap-4">
+						<CompanyAvatar name={app.company} className="size-12 rounded-xl text-lg" />
+						<div className="min-w-0">
+							<h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">{app.title}</h1>
+							<div className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
+								<span>{app.company}</span>
+								<span className="flex items-center gap-1">
+									<CalendarIcon className="size-3.5" />
+									{formatDate(app.applied_at)}
+								</span>
+							</div>
 						</div>
 					</div>
 					<div className="flex items-center gap-2">
-						<StatusBadge status={app.status} />
+						<Select value={app.status} onValueChange={(v) => changeStatus(v as ApplicationStatus)}>
+							<SelectTrigger className="w-44">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{APPLICATION_STATUSES.map((s) => (
+									<SelectItem key={s} value={s}>
+										<span className={cn("size-2 rounded-full", STATUS_META[s].dot)} />
+										{STATUS_META[s].label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline" size="icon" aria-label="More actions">
+									<MoreHorizontalIcon />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
+									<Trash2Icon />
+									Delete application
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
 			</div>
 
-			<section className="flex flex-col gap-2">
-				<div className="font-mono text-xs uppercase tracking-wider text-[#64748b]">Status</div>
-				<div className="flex flex-wrap gap-2">
-					{APPLICATION_STATUSES.map((s) => (
-						<button
-							key={s}
-							type="button"
-							onClick={() => changeStatus(s)}
-							className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
-								app.status === s
-									? "border-[#fafafa] bg-[#fafafa] text-[#09090b]"
-									: "border-[#fafafa]/40 hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
-							}`}
-						>
-							{s}
-						</button>
-					))}
+			<div className="grid gap-6 lg:grid-cols-5">
+				<div className="flex flex-col gap-6 lg:col-span-2">
+					<Card>
+						<CardHeader>
+							<CardTitle>Job description</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="max-h-[28rem] overflow-auto whitespace-pre-wrap pr-1 text-sm leading-relaxed text-foreground/85">
+								{app.description}
+							</div>
+						</CardContent>
+					</Card>
+					<CvInput value={cvText} onChange={setCvText} />
 				</div>
-				<div className="font-mono text-xs text-[#64748b]">
-					updated {formatDateTime(app.updated_at)}
+
+				<div className="lg:col-span-3">
+					<Tabs defaultValue="match" className="gap-4">
+						<TabsList className="w-full sm:w-auto">
+							<TabsTrigger value="match">Match</TabsTrigger>
+							<TabsTrigger value="tailor">Tailored CV</TabsTrigger>
+							<TabsTrigger value="profiles">People</TabsTrigger>
+						</TabsList>
+						<TabsContent value="match">
+							<MatchPanel
+								application={app}
+								cvText={cvText}
+								onResult={(r) =>
+									setApp((p) => (p ? { ...p, analysis: r.analysis, analysis_updated_at: r.updated_at } : p))
+								}
+							/>
+						</TabsContent>
+						<TabsContent value="tailor">
+							<TailorPanel
+								application={app}
+								cvText={cvText}
+								onResult={(r) =>
+									setApp((p) => (p ? { ...p, tailored: r.tailored, tailored_updated_at: r.updated_at } : p))
+								}
+							/>
+						</TabsContent>
+						<TabsContent value="profiles">
+							<SuggestedProfilesPanel
+								applicationId={app.id}
+								initialHits={app.suggested_profiles?.hits ?? null}
+								initialUpdatedAt={app.suggested_profiles_updated_at}
+							/>
+						</TabsContent>
+					</Tabs>
 				</div>
-			</section>
+			</div>
 
-			<section className="flex flex-col gap-2">
-				<div className="font-mono text-xs uppercase tracking-wider text-[#64748b]">
-					Job description
+			<Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete this application?</DialogTitle>
+						<DialogDescription>
+							{app.title} at {app.company} and its analysis will be removed. This can&apos;t be undone.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="outline">Cancel</Button>
+						</DialogClose>
+						<Button variant="destructive" onClick={onDelete}>
+							Delete
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
+}
+
+function DetailSkeleton() {
+	return (
+		<div className="flex flex-col gap-6 pt-10">
+			<div className="flex items-center gap-4">
+				<Skeleton className="size-12 rounded-xl" />
+				<div className="flex flex-col gap-2">
+					<Skeleton className="h-7 w-64" />
+					<Skeleton className="h-4 w-40" />
 				</div>
-				<pre className="max-h-80 overflow-auto whitespace-pre-wrap border border-[#fafafa]/40 p-4 font-mono text-xs leading-relaxed">
-					{app.description}
-				</pre>
-			</section>
-
-			<SuggestedProfilesPanel
-				applicationId={app.id}
-				initialHits={app.suggested_profiles?.hits ?? null}
-				initialUpdatedAt={app.suggested_profiles_updated_at}
-			/>
-
-			<MatchPanel application={app} initialResult={initialResult} onResult={onMatchResult} />
+			</div>
+			<div className="grid gap-6 lg:grid-cols-5">
+				<Skeleton className="h-96 lg:col-span-2" />
+				<Skeleton className="h-96 lg:col-span-3" />
+			</div>
 		</div>
 	);
 }

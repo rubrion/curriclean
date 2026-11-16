@@ -22,11 +22,12 @@ export interface Application {
 	description: string;
 	applied_at: string;
 	status: ApplicationStatus;
-	analysis: StoredAnalysis | null;
-	analysis_hash: string | null;
+	analysis: MatchAnalysis | null;
 	analysis_updated_at: string | null;
 	suggested_profiles: StoredSuggestedProfiles | null;
 	suggested_profiles_updated_at: string | null;
+	tailored: TailoredCv | null;
+	tailored_updated_at: string | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -59,26 +60,71 @@ export interface MatchAnalysis {
 	interview_questions: string[];
 }
 
-export interface MatchMetrics {
-	model: string;
-	tokens_in: number;
-	tokens_out: number;
-	latency_ms: number;
-	cost_estimate_usd: number;
-	cached: boolean;
-	cache_key: string;
-}
-
-export interface StoredAnalysis {
-	analysis: MatchAnalysis;
-	metrics: MatchMetrics;
-}
-
 export interface MatchResponse {
 	application_id: string;
 	analysis: MatchAnalysis;
-	metrics: MatchMetrics;
 	updated_at: string;
+}
+
+export interface TailoredBullet {
+	original: string;
+	improved: string;
+	reason: string;
+}
+
+export interface TailoredCv {
+	headline: string;
+	summary: string;
+	bullets: TailoredBullet[];
+	keywords: string[];
+}
+
+export interface TailorResponse {
+	application_id: string;
+	tailored: TailoredCv;
+	updated_at: string;
+}
+
+export interface ApplicationStats {
+	total: number;
+	by_status: Record<ApplicationStatus, number>;
+	average_score: number | null;
+	analyzed: number;
+	scores: { id: string; company: string; title: string; applied_at: string; score: number }[];
+	credits_spent: number;
+	runs_by_day: { day: string; runs: number }[];
+}
+
+export interface CreditPack {
+	id: string;
+	usd: number;
+	credits: number;
+}
+
+export interface BillingInfo {
+	credits: number;
+	free_runs_left: number;
+	free_runs_daily: number;
+	prices: { analysis: number; tailor: number };
+	packs: CreditPack[];
+	checkout_enabled: boolean;
+	publishable_key: string | null;
+}
+
+export interface LedgerEntry {
+	ref: string;
+	credits: number;
+	kind: "topup" | "refund" | "spend";
+	note: string | null;
+	created_at: string;
+}
+
+export interface PaymentStatus {
+	id: string;
+	pack: string;
+	credits: number;
+	status: "open" | "paid";
+	paid_at: string | null;
 }
 
 export interface CvParseResponse {

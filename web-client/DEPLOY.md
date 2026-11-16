@@ -35,8 +35,9 @@ Both the backend (`curriclean-api/`) and the web client (`web-client/`) deploy t
    wrangler secret put AUTH_SHARED_SECRET   # X-Auth-Secret for OAuth upsert; must match the frontend
    wrangler secret put RESEND_API_KEY       # Resend transactional email
    wrangler secret put BRAVE_API_KEY        # Brave Search (LinkedIn suggestions); optional
-   # Optional: use OpenRouter instead of Workers AI
-   wrangler secret put OPENROUTER_API_KEY
+   # Optional: Stripe credit packs (checkout stays disabled without them)
+   wrangler secret put STRIPE_SECRET_KEY
+   wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
 
 5. **Resend.** Sign up at [resend.com](https://resend.com) and verify a sending domain (or use `onboarding@resend.dev` for dev). Set `FRONTEND_URL` in `wrangler.jsonc → vars` to your frontend Worker URL so verify/reset links are correct.

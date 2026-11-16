@@ -20,6 +20,20 @@ async function post(path: string, body: unknown): Promise<void> {
 	}
 }
 
+const AUTH_MESSAGES: Record<string, string> = {
+	INVALID_OR_EXPIRED_TOKEN: "This link is invalid or has expired. Request a new one.",
+	VALIDATION_ERROR: "Please check your details. Passwords need at least 8 characters.",
+	USER_NOT_FOUND: "We couldn't find that account.",
+	INVALID_CREDENTIALS: "That email and password don't match.",
+	EMAIL_NOT_VERIFIED: "Please verify your email first — check your inbox.",
+};
+
+/** Turn an auth API error into a sentence people can act on. */
+export function authErrorMessage(e: unknown): string {
+	const code = e instanceof Error ? e.message : "";
+	return AUTH_MESSAGES[code] ?? "Something went wrong. Please try again.";
+}
+
 export const authApi = {
 	register: (email: string, password: string, name?: string) =>
 		post("/auth/register", { email, password, name }),

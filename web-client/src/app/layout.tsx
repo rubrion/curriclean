@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	title: "CurriClean",
-	description: "Open-source job application tracker with LLM-powered CV matching.",
+	description: "Track job applications and see how well your CV fits each role.",
 	icons: {
 		icon: [
 			{ url: "/favicon.ico", sizes: "any" },
@@ -34,8 +34,8 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+		<html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+			<body className="antialiased">
 				<Providers>{children}</Providers>
 			</body>
 		</html>

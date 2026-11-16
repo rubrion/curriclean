@@ -1,9 +1,17 @@
 "use client";
 
+import { ExternalLinkIcon, RefreshCwIcon, SearchIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
 
-import { api, ApiError } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { ErrorAlert } from "@/components/ErrorAlert";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { api } from "@/lib/api";
+import { type FriendlyError, toFriendlyError } from "@/lib/errors";
+import { formatRelative } from "@/lib/format";
 import type { ProfileHit } from "@/lib/types";
 import { useBearer } from "@/lib/useBearer";
 
@@ -20,106 +28,88 @@ export function SuggestedProfilesPanel({
 	const [hits, setHits] = useState<ProfileHit[] | null>(initialHits);
 	const [updatedAt, setUpdatedAt] = useState<string | null>(initialUpdatedAt);
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [notConfigured, setNotConfigured] = useState(false);
+	const [error, setError] = useState<FriendlyError | null>(null);
 
 	const hasData = hits !== null && hits.length > 0;
 
 	async function fetchHits() {
-		if (!bearer) {
-			setError("Not signed in.");
-			return;
-		}
+		if (!bearer) return;
 		setError(null);
-		setNotConfigured(false);
 		setLoading(true);
 		try {
-			const res = await api.getSuggestedProfiles(bearer, applicationId, {
-				refresh: hasData,
-			});
+			const res = await api.getSuggestedProfiles(bearer, applicationId, { refresh: hasData });
 			setHits(res.hits);
 			setUpdatedAt(new Date().toISOString());
-		} catch (e: unknown) {
-			if (e instanceof ApiError) {
-				if (e.status === 503) {
-					if (!hasData) setNotConfigured(true);
-					else setError("LinkedIn search not configured. Showing previous results.");
-				} else {
-					const msg = typeof e.detail === "string" ? e.detail : e.message;
-					setError(hasData ? `${msg}. Showing previous results.` : msg);
-				}
-			} else {
-				setError(hasData ? "Network error. Showing previous results." : "Network error.");
-			}
+		} catch (e) {
+			setError(toFriendlyError(e));
 		} finally {
 			setLoading(false);
 		}
 	}
 
 	return (
-		<section className="flex flex-col gap-3">
-			<div className="flex items-start justify-between gap-4">
-				<div className="flex flex-col">
-					<h2 className="text-lg font-semibold tracking-tight">Suggested profiles</h2>
-					<p className="font-mono text-xs text-[#64748b]">
-						LinkedIn profiles relevant to this role, via Brave Search.
-					</p>
-				</div>
-				<div className="flex flex-col items-end gap-1">
-					<button
-						type="button"
-						onClick={fetchHits}
-						disabled={loading}
-						className="border border-[#fafafa]/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#fafafa]"
-					>
-						{loading ? "Searching…" : hasData ? "Refresh" : "Find profiles"}
-					</button>
-					{updatedAt && (
-						<span className="font-mono text-xs text-[#64748b]">
-							updated {formatDateTime(updatedAt)}
-						</span>
-					)}
-				</div>
-			</div>
+		<Card>
+			<CardHeader>
+				<CardTitle>People in similar roles</CardTitle>
+				<CardDescription>
+					LinkedIn profiles related to this position — great for networking or referrals.
+					{updatedAt && ` Updated ${formatRelative(updatedAt)}.`}
+				</CardDescription>
+				<CardAction>
+					<Button variant={hasData ? "outline" : "default"} size="sm" onClick={fetchHits} disabled={loading}>
+						{loading ? <Spinner /> : hasData ? <RefreshCwIcon /> : <SearchIcon />}
+						{loading ? "Searching…" : hasData ? "Refresh" : "Find people"}
+					</Button>
+				</CardAction>
+			</CardHeader>
+			<CardContent className="flex flex-col gap-3">
+				{error && <ErrorAlert error={error} onRetry={fetchHits} />}
 
-			{notConfigured && (
-				<div className="font-mono text-xs text-[#64748b]">
-					LinkedIn search not configured.
-				</div>
-			)}
+				{loading && !hasData &&
+					Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
 
-			{error && !notConfigured && (
-				<div className="border border-[#fafafa] p-3 font-mono text-sm">{error}</div>
-			)}
+				{!loading && hits === null && !error && (
+					<Empty className="py-6">
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<UsersIcon />
+							</EmptyMedia>
+							<EmptyTitle>Find people to talk to</EmptyTitle>
+							<EmptyDescription>We&apos;ll search for professionals connected to this role and company.</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				)}
 
-			{hits !== null && hits.length === 0 && !error && !notConfigured && (
-				<div className="font-mono text-xs text-[#64748b]">No profiles found.</div>
-			)}
+				{hits !== null && hits.length === 0 && !error && (
+					<p className="py-6 text-center text-sm text-muted-foreground">No profiles found for this role yet.</p>
+				)}
 
-			{hits && hits.length > 0 && (
-				<ul className="flex flex-col divide-y divide-[#fafafa]/20 border border-[#fafafa]/40">
-					{hits.map((h) => (
-						<li key={h.url}>
-							<a
-								href={h.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="flex flex-col gap-1 p-4 hover:bg-[#fafafa]/5"
-							>
-								<div className="truncate text-sm font-medium">{h.title}</div>
-								{h.description && (
-									<div className="line-clamp-2 text-xs text-[#fafafa]/80">
-										{h.description}
+				{hasData && (
+					<ul className="flex flex-col divide-y rounded-lg border">
+						{hits.map((h) => (
+							<li key={h.url}>
+								<a
+									href={h.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="group flex items-start gap-3 p-3 transition-colors hover:bg-muted/40"
+								>
+									<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-info-soft text-sm font-semibold text-info">
+										{h.title.trim()[0]?.toUpperCase() ?? "?"}
+									</span>
+									<div className="min-w-0 flex-1">
+										<div className="truncate text-sm font-medium">{h.title}</div>
+										{h.description && (
+											<div className="line-clamp-2 text-xs text-muted-foreground">{h.description}</div>
+										)}
 									</div>
-								)}
-								<div className="truncate font-mono text-xs text-[#64748b]">
-									{h.url}
-								</div>
-							</a>
-						</li>
-					))}
-				</ul>
-			)}
-		</section>
+									<ExternalLinkIcon className="mt-1 size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+								</a>
+							</li>
+						))}
+					</ul>
+				)}
+			</CardContent>
+		</Card>
 	);
 }

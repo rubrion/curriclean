@@ -5,12 +5,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense, useState } from "react";
 
+import { AuthHeading, AuthNotice } from "@/components/AuthForm";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+
 const OAUTH_GOOGLE_ENABLED = process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "1";
 const OAUTH_GITHUB_ENABLED = process.env.NEXT_PUBLIC_AUTH_GITHUB_ENABLED === "1";
 
 export default function LoginPage() {
 	return (
-		<Suspense fallback={<div className="font-mono text-sm text-[#64748b]">Loading…</div>}>
+		<Suspense>
 			<LoginInner />
 		</Suspense>
 	);
@@ -21,7 +27,7 @@ function LoginInner() {
 	const params = useSearchParams();
 	const verified = params.get("verified") === "1";
 	const reset = params.get("reset") === "1";
-	const callbackUrl = params.get("callbackUrl") ?? "/applications";
+	const callbackUrl = params.get("callbackUrl") ?? "/dashboard";
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -32,108 +38,84 @@ function LoginInner() {
 		e.preventDefault();
 		setError(null);
 		setSubmitting(true);
-		const res = await signIn("credentials", {
-			email,
-			password,
-			redirect: false,
-		});
-		setSubmitting(false);
+		const res = await signIn("credentials", { email, password, redirect: false });
 		if (!res || res.error) {
-			setError("Invalid email or password, or email not verified.");
+			setSubmitting(false);
+			setError("That email and password don't match, or your email isn't verified yet.");
 			return;
 		}
 		router.push(callbackUrl);
 	}
 
 	return (
-		<div className="flex flex-col gap-6">
-			<h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+		<div className="flex flex-col gap-5">
+			<AuthHeading title="Welcome back" description="Sign in to continue your job search." />
 
-			{verified && (
-				<div className="border border-[#fafafa]/40 p-3 font-mono text-xs">
-					Email verified. You can sign in now.
-				</div>
-			)}
-			{reset && (
-				<div className="border border-[#fafafa]/40 p-3 font-mono text-xs">
-					Password reset. Sign in with your new password.
-				</div>
-			)}
+			{verified && <AuthNotice kind="success">Email verified — you can sign in now.</AuthNotice>}
+			{reset && <AuthNotice kind="success">Password updated. Sign in with your new password.</AuthNotice>}
 
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
-				<Field label="Email">
-					<input
-						type="email"
-						required
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="w-full border border-[#fafafa]/60 bg-transparent px-3 py-2 outline-none focus:border-[#fafafa]"
-					/>
-				</Field>
-				<Field label="Password">
-					<input
-						type="password"
-						required
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="w-full border border-[#fafafa]/60 bg-transparent px-3 py-2 outline-none focus:border-[#fafafa]"
-					/>
-				</Field>
-				{error && (
-					<div className="border border-[#fafafa] p-3 font-mono text-sm">{error}</div>
-				)}
-				<button
-					type="submit"
-					disabled={submitting}
-					className="border border-[#fafafa] bg-[#fafafa] px-4 py-2 text-[#09090b] disabled:opacity-50"
-				>
-					{submitting ? "Signing in…" : "Sign in"}
-				</button>
+			<form onSubmit={onSubmit}>
+				<FieldGroup>
+					<Field>
+						<FieldLabel htmlFor="email">Email</FieldLabel>
+						<Input
+							id="email"
+							type="email"
+							autoComplete="email"
+							required
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="you@example.com"
+						/>
+					</Field>
+					<Field>
+						<div className="flex items-center justify-between">
+							<FieldLabel htmlFor="password">Password</FieldLabel>
+							<Link href="/forgot" className="text-xs text-muted-foreground hover:text-primary">
+								Forgot password?
+							</Link>
+						</div>
+						<Input
+							id="password"
+							type="password"
+							autoComplete="current-password"
+							required
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+					</Field>
+					{error && <AuthNotice kind="error">{error}</AuthNotice>}
+					<Button type="submit" size="lg" disabled={submitting} className="w-full">
+						{submitting && <Spinner />}
+						Sign in
+					</Button>
+
+					{(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
+						<>
+							<FieldSeparator>or continue with</FieldSeparator>
+							<div className="grid gap-2 sm:grid-cols-2">
+								{OAUTH_GOOGLE_ENABLED && (
+									<Button type="button" variant="outline" size="lg" onClick={() => signIn("google", { callbackUrl })}>
+										Google
+									</Button>
+								)}
+								{OAUTH_GITHUB_ENABLED && (
+									<Button type="button" variant="outline" size="lg" onClick={() => signIn("github", { callbackUrl })}>
+										GitHub
+									</Button>
+								)}
+							</div>
+						</>
+					)}
+				</FieldGroup>
 			</form>
 
-			{(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
-				<div className="flex flex-col gap-2">
-					<div className="text-center font-mono text-xs uppercase tracking-wider text-[#64748b]">
-						or
-					</div>
-					{OAUTH_GOOGLE_ENABLED && (
-						<button
-							type="button"
-							onClick={() => signIn("google", { callbackUrl })}
-							className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
-						>
-							Continue with Google
-						</button>
-					)}
-					{OAUTH_GITHUB_ENABLED && (
-						<button
-							type="button"
-							onClick={() => signIn("github", { callbackUrl })}
-							className="border border-[#fafafa]/60 px-4 py-2 transition-colors hover:border-[#fafafa] hover:bg-[#fafafa] hover:text-[#09090b]"
-						>
-							Continue with GitHub
-						</button>
-					)}
-				</div>
-			)}
-
-			<div className="flex justify-between font-mono text-xs text-[#64748b]">
-				<Link href="/register" className="hover:underline">
-					Create account
+			<p className="text-center text-sm text-muted-foreground">
+				New to CurriClean?{" "}
+				<Link href="/register" className="font-medium text-primary hover:underline">
+					Create an account
 				</Link>
-				<Link href="/forgot" className="hover:underline">
-					Forgot password?
-				</Link>
-			</div>
+			</p>
 		</div>
-	);
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-	return (
-		<label className="flex flex-col gap-1.5">
-			<span className="font-mono text-xs uppercase tracking-wider text-[#64748b]">{label}</span>
-			{children}
-		</label>
 	);
 }

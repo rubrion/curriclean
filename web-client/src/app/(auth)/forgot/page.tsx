@@ -1,8 +1,14 @@
 "use client";
 
+import { MailIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { AuthHeading } from "@/components/AuthForm";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { authApi } from "@/lib/authApi";
 
 export default function ForgotPage() {
@@ -16,7 +22,7 @@ export default function ForgotPage() {
 		try {
 			await authApi.forgot(email);
 		} catch {
-			// Always pretend success — backend already prevents user enumeration.
+			// Always show the same result — the backend prevents user enumeration.
 		} finally {
 			setSubmitting(false);
 			setSubmitted(true);
@@ -25,46 +31,55 @@ export default function ForgotPage() {
 
 	if (submitted) {
 		return (
-			<div className="flex flex-col gap-4">
-				<h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
-				<p className="text-sm leading-relaxed text-[#fafafa]/80">
-					If an account exists for <span className="font-mono">{email}</span>, a reset
-					link is on its way.
-				</p>
-				<Link href="/login" className="font-mono text-xs underline">
-					Back to sign in
-				</Link>
+			<div className="flex flex-col items-center gap-4 text-center">
+				<span className="flex size-12 items-center justify-center rounded-full bg-accent text-accent-foreground">
+					<MailIcon className="size-6" />
+				</span>
+				<AuthHeading
+					title="Check your inbox"
+					description={
+						<>
+							If an account exists for <span className="font-medium text-foreground">{email}</span>, a reset link is on
+							its way.
+						</>
+					}
+				/>
+				<Button asChild variant="outline" className="w-full">
+					<Link href="/login">Back to sign in</Link>
+				</Button>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-col gap-6">
-			<h1 className="text-2xl font-semibold tracking-tight">Forgot password</h1>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
-				<label className="flex flex-col gap-1.5">
-					<span className="font-mono text-xs uppercase tracking-wider text-[#64748b]">
-						Email
-					</span>
-					<input
-						type="email"
-						required
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="w-full border border-[#fafafa]/60 bg-transparent px-3 py-2 outline-none focus:border-[#fafafa]"
-					/>
-				</label>
-				<button
-					type="submit"
-					disabled={submitting}
-					className="border border-[#fafafa] bg-[#fafafa] px-4 py-2 text-[#09090b] disabled:opacity-50"
-				>
-					{submitting ? "Sending…" : "Send reset link"}
-				</button>
+		<div className="flex flex-col gap-5">
+			<AuthHeading title="Forgot your password?" description="Enter your email and we'll send you a reset link." />
+			<form onSubmit={onSubmit}>
+				<FieldGroup>
+					<Field>
+						<FieldLabel htmlFor="email">Email</FieldLabel>
+						<Input
+							id="email"
+							type="email"
+							autoComplete="email"
+							required
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="you@example.com"
+						/>
+					</Field>
+					<Button type="submit" size="lg" disabled={submitting} className="w-full">
+						{submitting && <Spinner />}
+						Send reset link
+					</Button>
+				</FieldGroup>
 			</form>
-			<Link href="/login" className="font-mono text-xs underline">
-				Back to sign in
-			</Link>
+			<p className="text-center text-sm text-muted-foreground">
+				Remembered it?{" "}
+				<Link href="/login" className="font-medium text-primary hover:underline">
+					Sign in
+				</Link>
+			</p>
 		</div>
 	);
 }
