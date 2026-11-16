@@ -8,7 +8,7 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 
 | Key | Required | Notes |
 |-----|----------|-------|
-| `JWT_SECRET` | yes | HS256 signing secret for access tokens; must match the frontend |
+| `JWT_SECRET` | yes | HS256 signing secret for access tokens |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) | Server-to-server secret for `/auth/oauth-upsert`; must match the frontend |
 | `RESEND_API_KEY` | yes | Transactional email (verify + reset) |
 | `BRAVE_API_KEY` | no | Enables `/applications/{id}/suggested-profiles`; feature hidden if absent |
@@ -43,7 +43,6 @@ Secrets are set via `wrangler secret put <NAME>`. Non-sensitive vars live in `wr
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | no | build-time | `1` to show Google button |
 | `NEXT_PUBLIC_AUTH_GITHUB_ENABLED` | no | build-time | `1` to show GitHub button |
 | `AUTH_SECRET` | yes | wrangler secret | Auth.js session encryption |
-| `JWT_SECRET` | yes | wrangler secret | Same value as backend `JWT_SECRET` |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) | wrangler secret | Same value as backend `AUTH_SHARED_SECRET` |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | no | wrangler secret | Google OAuth |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | no | wrangler secret | GitHub OAuth |

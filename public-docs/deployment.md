@@ -47,7 +47,6 @@ See `web-client/DEPLOY.md` for the full guide. Set build-time vars in `.env.prod
 
 ```sh
 wrangler secret put AUTH_SECRET
-wrangler secret put JWT_SECRET          # same value as backend JWT_SECRET
 wrangler secret put AUTH_SHARED_SECRET
 # OAuth (optional)
 wrangler secret put AUTH_GOOGLE_ID

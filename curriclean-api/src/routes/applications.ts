@@ -18,19 +18,15 @@ const STATUS_VALUES: ApplicationStatus[] = [
 
 // ── Row → API response ────────────────────────────────────────────────────────
 
-/** Stored analysis JSON → MatchAnalysis (older rows wrapped it as { analysis, metrics }). */
+/** Stored analysis JSON → MatchAnalysis. */
 export function parseAnalysis(raw: string | null): MatchAnalysis | null {
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw);
-    return (v && typeof v === "object" && "analysis" in v ? v.analysis : v) as MatchAnalysis;
+    return JSON.parse(raw) as MatchAnalysis;
   } catch {
     return null;
   }
 }
-
-// SQL expression for the stored score, for both storage shapes.
-const SCORE_SQL = "COALESCE(json_extract(analysis, '$.score'), json_extract(analysis, '$.analysis.score'))";
 
 function rowToResponse(row: ApplicationRow) {
   return {
@@ -135,7 +131,7 @@ applications.get("/stats", async (c) => {
       "SELECT status, COUNT(*) AS count FROM applications WHERE user_id = ? GROUP BY status"
     ).bind(userId),
     c.env.DB.prepare(
-      `SELECT id, company, title, applied_at, ${SCORE_SQL} AS score
+      `SELECT id, company, title, applied_at, json_extract(analysis, '$.score') AS score
        FROM applications WHERE user_id = ? AND analysis IS NOT NULL
        ORDER BY applied_at ASC LIMIT 100`
     ).bind(userId),

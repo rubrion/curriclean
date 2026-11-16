@@ -31,7 +31,7 @@ Both the backend (`curriclean-api/`) and the web client (`web-client/`) deploy t
 4. **Set secrets:**
 
    ```bash
-   wrangler secret put JWT_SECRET           # HS256 signing secret; must match the frontend
+   wrangler secret put JWT_SECRET           # HS256 signing secret for access tokens
    wrangler secret put AUTH_SHARED_SECRET   # X-Auth-Secret for OAuth upsert; must match the frontend
    wrangler secret put RESEND_API_KEY       # Resend transactional email
    wrangler secret put BRAVE_API_KEY        # Brave Search (LinkedIn suggestions); optional
@@ -80,7 +80,6 @@ wrangler d1 migrations apply curriclean --remote
 | Secret | Purpose |
 |--------|---------|
 | `AUTH_SECRET` | Auth.js session JWT/cookie encryption. Generate: `openssl rand -base64 32` |
-| `JWT_SECRET` | Must match the backend `JWT_SECRET` exactly |
 | `AUTH_SHARED_SECRET` | Must match the backend `AUTH_SHARED_SECRET` exactly |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth (optional) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth (optional) |
@@ -94,7 +93,6 @@ $EDITOR .env.production   # set NEXT_PUBLIC_API_URL etc.
 
 # 2. Set Wrangler secrets (once per environment)
 npx wrangler secret put AUTH_SECRET
-npx wrangler secret put JWT_SECRET
 npx wrangler secret put AUTH_SHARED_SECRET
 # Optional OAuth
 npx wrangler secret put AUTH_GOOGLE_ID
@@ -160,7 +158,7 @@ Connect the GitHub repo as a [Workers Build](https://developers.cloudflare.com/w
 - Build command: `npm run deploy`
 - Build directory: `web-client/`
 - Build variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, `NEXT_PUBLIC_AUTH_GITHUB_ENABLED`
-- Secrets: `AUTH_SECRET`, `JWT_SECRET`, `AUTH_SHARED_SECRET`, plus any OAuth secrets
+- Secrets: `AUTH_SECRET`, `AUTH_SHARED_SECRET`, plus any OAuth secrets
 
 ---
 

@@ -5,7 +5,6 @@ const KV_TTL_SECONDS = 90_000; // ~25 hours — auto-expires stale day entries
 export interface DailyUsage {
   tokens_in: number;
   tokens_out: number;
-  cost_usd: number;
   runs: number;
 }
 
@@ -27,12 +26,12 @@ export async function getUsedToday(env: Env, userId: string): Promise<DailyUsage
   if (cached) return cached;
 
   const row = await env.DB.prepare(
-    "SELECT tokens_in, tokens_out, cost_usd, runs FROM token_usage WHERE user_id = ? AND day = ?"
+    "SELECT tokens_in, tokens_out, runs FROM token_usage WHERE user_id = ? AND day = ?"
   )
     .bind(userId, day)
     .first<DailyUsage>();
 
-  const usage: DailyUsage = row ?? { tokens_in: 0, tokens_out: 0, cost_usd: 0, runs: 0 };
+  const usage: DailyUsage = row ?? { tokens_in: 0, tokens_out: 0, runs: 0 };
   await env.BUDGET_KV.put(key, JSON.stringify(usage), { expirationTtl: KV_TTL_SECONDS });
   return usage;
 }
@@ -62,8 +61,8 @@ export async function recordUsage(
 
   // D1: upsert (source of truth)
   await env.DB.prepare(`
-    INSERT INTO token_usage (id, user_id, day, tokens_in, tokens_out, cost_usd, runs, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, 0, 1, ?, ?)
+    INSERT INTO token_usage (id, user_id, day, tokens_in, tokens_out, runs, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, 1, ?, ?)
     ON CONFLICT (user_id, day) DO UPDATE SET
       tokens_in  = token_usage.tokens_in  + excluded.tokens_in,
       tokens_out = token_usage.tokens_out + excluded.tokens_out,

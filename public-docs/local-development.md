@@ -1,27 +1,28 @@
 # Local Development
 
-## Backend
+Requires Node 20+ and [Bun](https://bun.sh). Workers AI runs remotely even in `wrangler dev`, so you need `wrangler login` (and `CLOUDFLARE_ACCOUNT_ID` if your login has several accounts).
+
+## Backend (`curriclean-api/`)
 
 ```bash
-cd backend
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e ".[dev]"
-cp .env.example .env   # fill in secrets
-alembic upgrade head
-uvicorn app.main:app --reload
+cd curriclean-api
+bun install
+cp .dev.vars.example .dev.vars          # fill in secrets
+npx wrangler d1 migrations apply curriclean --local
+npx wrangler dev --port 8787
 ```
 
-Seed demo data (optional):
+Seed demo applications (optional): `npx wrangler d1 execute curriclean --local --file seeds/seed_dev.sql`.
 
-```bash
-python -m scripts.seed --reset
-```
-
-## Frontend
+## Frontend (`web-client/`)
 
 ```bash
 cd web-client
 npm install
-cp .env.example .env.local   # fill in secrets
+cp .env.example .env.local              # NEXT_PUBLIC_API_URL=http://localhost:8787
 npm run dev
 ```
+
+## Validate
+
+From the repo root: `make validate` (API typecheck, web lint + typecheck + build).

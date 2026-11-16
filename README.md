@@ -58,7 +58,7 @@ Paste a job description and your CV. Get a structured fit score, matched skills,
 |-------|---------|
 | `users` | id (TEXT/UUID), email (unique), password_hash (nullable for OAuth), email_verified, name, image |
 | `verification_tokens` | identifier (`verify:<email>` or `reset:<email>`) + token + expires |
-| `token_usage` | user_id, day (TEXT, YYYY-MM-DD), tokens_in, tokens_out, cost_usd — unique on (user_id, day) |
+| `token_usage` | user_id, day (TEXT, YYYY-MM-DD), tokens_in, tokens_out, runs — unique on (user_id, day) |
 | `applications` | id, user_id (FK), company, title, description, applied_at, status, analysis (JSON text), analysis_hash, suggested_profiles (JSON text), timestamps |
 
 Status enum: `saved`, `applied`, `interviewing`, `offer`, `rejected`, `withdrawn`.
@@ -107,7 +107,6 @@ See [environment-variables.md](environment-variables.md) for the full reference.
 | Key | Required |
 |-----|----------|
 | `AUTH_SECRET` | yes |
-| `JWT_SECRET` | yes |
 | `AUTH_SHARED_SECRET` | yes (if OAuth) |
 
 ## Local development

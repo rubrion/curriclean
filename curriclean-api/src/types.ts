@@ -45,7 +45,6 @@ export interface TokenUsageRow {
   day: string;
   tokens_in: number;
   tokens_out: number;
-  cost_usd: number;
   runs: number;
   created_at: string;
   updated_at: string;
