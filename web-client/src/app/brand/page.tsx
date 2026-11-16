@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { dictionaries, translate, type TKey } from "@/i18n/dictionaries";
 import { getLocale } from "@/i18n/server";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 /** Preview background: light paper, dark charcoal, or brand red. */
@@ -55,7 +55,7 @@ export async function generateMetadata(): Promise<Metadata> {
 	const locale = await getLocale();
 	const t = (key: TKey) => translate(dictionaries[locale], key);
 	return {
-		title: `${t("brand.metaTitle")} · ${SITE_NAME}`,
+		title: t("brand.metaTitle"),
 		description: t("brand.metaDesc"),
 		alternates: { canonical: `${SITE_URL}/brand` },
 	};
