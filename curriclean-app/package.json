@@ -1,0 +1,22 @@
+{
+  "name": "curriclean-app",
+  "version": "1.0.0",
+  "description": "CurriClean for Android: a Capacitor shell around curriclean.com, so the app updates with every web deploy.",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync",
+    "android": "cap open android",
+    "assets": "capacitor-assets generate --android --iconBackgroundColor '#FBF7F2' --iconBackgroundColorDark '#1C1917' --splashBackgroundColor '#FBF7F2' --splashBackgroundColorDark '#1C1917'",
+    "apk:debug": "cd android && ./gradlew assembleDebug",
+    "aab:release": "cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.3",
+    "typescript": "^5.9.3"
+  }
+}

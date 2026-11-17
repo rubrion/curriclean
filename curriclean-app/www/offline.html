@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>CurriClean</title>
+		<style>
+			body {
+				display: grid;
+				min-height: 100dvh;
+				margin: 0;
+				place-items: center;
+				padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+				background: #fbf7f2;
+				color: #1c1917;
+				font: 16px/1.5 system-ui, sans-serif;
+				text-align: center;
+			}
+			h1 { margin: 0 0 8px; font-size: 22px; }
+			p { margin: 0 0 20px; color: #57534e; }
+			a { display: inline-block; padding: 12px 22px; border-radius: 12px; background: #c42524; color: #fff; font-weight: 700; text-decoration: none; }
+			@media (prefers-color-scheme: dark) {
+				body { background: #1c1917; color: #fbf7f2; }
+				p { color: #a8a29e; }
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>You're offline</h1>
+			<p>CurriClean needs a connection. Check it and try again.</p>
+			<a href="https://curriclean.com/dashboard">Try again</a>
+		</main>
+	</body>
+</html>

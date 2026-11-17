@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CurriClean</string>
+    <string name="title_activity_main">CurriClean</string>
+    <string name="package_name">com.curriclean</string>
+    <string name="custom_url_scheme">com.curriclean</string>
+</resources>

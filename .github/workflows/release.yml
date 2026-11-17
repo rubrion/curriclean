@@ -1,0 +1,31 @@
+name: Release
+
+# Auto-bumps curriclean-app's semantic version from Conventional Commits and
+# tags it, via the shared engine in rubrion/.github. The tag feeds Codemagic's
+# VERSION_NAME. No PRs, no PATs: the rubrion GitHub App authors the commit.
+#
+# Path-scoped + tag-namespaced so a commit to the API or the web client never
+# bumps the app, and the app's tags don't collide with other tags.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'curriclean-app/**'
+      - '.github/workflows/release.yml'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    # Dormant until AUTO_RELEASE=true (org/repo variable) and the rubrion App
+    # is installed on this repo with AUTOMATION_APP_PRIVATE_KEY available.
+    if: ${{ vars.AUTO_RELEASE == 'true' }}
+    uses: rubrion/.github/.github/workflows/mobile-version-bump.yml@main
+    with:
+      app-dir: curriclean-app
+      tag-prefix: curriclean-app-v
+    secrets:
+      app-private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
