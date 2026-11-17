@@ -34,6 +34,11 @@ const CheckoutSchema = z.object({ pack: z.enum(Object.keys(PACKS) as [Pack, ...P
 
 billing.post("/checkout", async (c) => {
   if (!stripeConfigured(c.env)) return c.json({ detail: "BILLING_UNAVAILABLE" }, 503);
+  // The Android app (curriclean-app/) sells nothing: Google Play only allows
+  // its own billing, so top-ups stay on the web.
+  if (/\bCurriCleanApp\b/.test(c.req.header("User-Agent") ?? "")) {
+    return c.json({ detail: "BILLING_UNAVAILABLE" }, 403);
+  }
 
   const parsed = CheckoutSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ detail: "VALIDATION_ERROR" }, 422);

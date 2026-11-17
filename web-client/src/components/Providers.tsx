@@ -7,18 +7,29 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
+import { StoreAppProvider } from "@/lib/storeAppContext";
 
-export function Providers({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+export function Providers({
+	locale,
+	storeApp,
+	children,
+}: {
+	locale: Locale;
+	storeApp: boolean;
+	children: React.ReactNode;
+}) {
 	return (
-		<SessionProvider>
-			<I18nProvider locale={locale}>
-				<ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-					<TooltipProvider delayDuration={200}>
-						{children}
-						<Toaster position="bottom-right" richColors closeButton />
-					</TooltipProvider>
-				</ThemeProvider>
-			</I18nProvider>
-		</SessionProvider>
+		<StoreAppProvider value={storeApp}>
+			<SessionProvider>
+				<I18nProvider locale={locale}>
+					<ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+						<TooltipProvider delayDuration={200}>
+							{children}
+							<Toaster position="bottom-right" richColors closeButton />
+						</TooltipProvider>
+					</ThemeProvider>
+				</I18nProvider>
+			</SessionProvider>
+		</StoreAppProvider>
 	);
 }

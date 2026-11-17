@@ -41,10 +41,13 @@ export function toFriendlyError(e: unknown): FriendlyError {
 	return { code: retryable ? "SERVER" : "CLIENT", retryable };
 }
 
-/** Dictionary keys for an error's title and message. */
-export function errorKeys(err: FriendlyError): { title: TKey; message: TKey } {
+/** Dictionary keys for an error's title and message (the store app can't point to buying credits). */
+export function errorKeys(err: FriendlyError, storeApp = false): { title: TKey; message: TKey } {
 	return {
 		title: `errors.${err.code}.title` as TKey,
-		message: `errors.${err.code}.message` as TKey,
+		message:
+			storeApp && err.code === "INSUFFICIENT_CREDITS"
+				? "errors.INSUFFICIENT_CREDITS.messageApp"
+				: (`errors.${err.code}.message` as TKey),
 	};
 }

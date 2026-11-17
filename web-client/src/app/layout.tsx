@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { getLocale } from "@/i18n/server";
 import { SITE_URL } from "@/lib/site";
+import { inStoreApp } from "@/lib/storeApp";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,10 +39,11 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const locale = await getLocale();
+	const storeApp = await inStoreApp();
 	return (
 		<html lang={locale === "pt" ? "pt-BR" : "en"} suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
 			<body className="antialiased">
-				<Providers locale={locale}>{children}</Providers>
+				<Providers locale={locale} storeApp={storeApp}>{children}</Providers>
 			</body>
 		</html>
 	);

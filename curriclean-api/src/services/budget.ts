@@ -16,6 +16,11 @@ function kvKey(userId: string, day: string): string {
   return `budget:v2:${userId}:${day}`; // v2: credits_used (v1 cached runs)
 }
 
+/** Drop today's cached usage (account deletion). Older days expire on their own. */
+export async function forgetUsage(env: Env, userId: string): Promise<void> {
+  await env.BUDGET_KV.delete(kvKey(userId, todayUtc()));
+}
+
 // ── Read today's usage (KV-first, D1 fallback) ────────────────────────────────
 
 export async function getUsedToday(env: Env, userId: string): Promise<DailyUsage> {

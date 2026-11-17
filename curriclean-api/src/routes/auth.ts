@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { Env, HonoVariables, UserOut, UserRow } from "../types";
-import { signJwt, safeCompare } from "../lib/auth";
+import { jwtMiddleware, signJwt, safeCompare } from "../lib/auth";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { sendVerifyEmail, sendResetEmail, EmailError, emailLang } from "../lib/email";
+import { forgetUsage } from "../services/budget";
 
 const auth = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -307,6 +308,35 @@ auth.post("/oauth-upsert", async (c) => {
 
   const token = await signJwt({ sub: user.id }, c.env.JWT_SECRET);
   return c.json({ token, user: userOut(user) });
+});
+
+
+// ── DELETE /auth/account — delete the signed-in account and all its data ──────
+// Required by Google Play for apps that create accounts. Removes the user, their
+// applications, usage, wallet, payments and ledger in one batch; Stripe keeps
+// its own payment records. Remaining credits are lost.
+
+auth.delete("/account", jwtMiddleware(), async (c) => {
+  const userId = c.get("userId");
+  const user = await c.env.DB.prepare("SELECT email FROM users WHERE id = ?")
+    .bind(userId)
+    .first<{ email: string }>();
+  if (!user) return c.json({ detail: "NOT_FOUND" }, 404);
+
+  const db = c.env.DB;
+  await db.batch([
+    db.prepare("DELETE FROM applications WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM token_usage WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM ledger WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM payments WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM wallets WHERE user_id = ?").bind(userId),
+    db
+      .prepare("DELETE FROM verification_tokens WHERE identifier IN (?, ?)")
+      .bind(`verify:${user.email}`, `reset:${user.email}`),
+    db.prepare("DELETE FROM users WHERE id = ?").bind(userId),
+  ]);
+  await forgetUsage(c.env, userId);
+  return c.body(null, 204);
 });
 
 export default auth;

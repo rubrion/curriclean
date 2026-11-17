@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { useBilling } from "@/lib/billing";
+import { useInStoreApp } from "@/lib/storeAppContext";
 import { type FriendlyError, toFriendlyError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import type { CreditPack, LedgerEntry, PaymentStatus } from "@/lib/types";
@@ -58,6 +59,13 @@ function stripeFor(key: string) {
 }
 
 export default function BillingPage() {
+	// Credit top-ups stay on the web: Google Play only allows its own billing.
+	const storeApp = useInStoreApp();
+	const router = useRouter();
+	useEffect(() => {
+		if (storeApp) router.replace("/dashboard");
+	}, [storeApp, router]);
+	if (storeApp) return null;
 	return (
 		<Suspense>
 			<BillingInner />

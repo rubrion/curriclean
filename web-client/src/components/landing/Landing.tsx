@@ -277,6 +277,9 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
 						<LandingLangLink locale="pt" className="hover:text-foreground">
 							Português
 						</LandingLangLink>
+						<Link href="/privacy" className="hover:text-foreground">
+							{t("legal.privacy")}
+						</Link>
 						<Link href="/brand" className="hover:text-foreground">
 							{t("landing.footer.brand")}
 						</Link>

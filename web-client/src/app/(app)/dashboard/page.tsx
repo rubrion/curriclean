@@ -23,6 +23,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { useBilling } from "@/lib/billing";
+import { useInStoreApp } from "@/lib/storeAppContext";
 import { formatRelative, STATUS_META } from "@/lib/format";
 import { APPLICATION_STATUSES, type Application, type ApplicationStats } from "@/lib/types";
 import { useI18n } from "@/i18n/client";
@@ -41,6 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function DashboardPage() {
 	const { data: session } = useSession();
 	const { billing } = useBilling();
+	const storeApp = useInStoreApp();
 	const { t, intl } = useI18n();
 	const scoreConfig = { score: { label: t("dash.scoreLabel"), color: "var(--chart-1)" } } satisfies ChartConfig;
 	const statusConfig = { count: { label: t("dash.pipelineCount") } } satisfies ChartConfig;
@@ -109,7 +111,7 @@ export default function DashboardPage() {
 							: undefined
 					}
 					loading={!billing}
-					href="/billing"
+					href={storeApp ? undefined : "/billing"}
 				/>
 			</div>
 

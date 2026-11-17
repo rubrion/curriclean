@@ -96,6 +96,10 @@ export const api = {
 		});
 	},
 
+	deleteAccount(bearer: string | null | undefined): Promise<void> {
+		return request(`/auth/account`, bearer, { method: "DELETE" });
+	},
+
 	deleteApplication(bearer: string | null | undefined, id: string): Promise<void> {
 		return request<void>(`/applications/${id}`, bearer, { method: "DELETE" });
 	},

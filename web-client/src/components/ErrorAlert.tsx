@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/client";
 import { errorKeys, type FriendlyError } from "@/lib/errors";
+import { useInStoreApp } from "@/lib/storeAppContext";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,15 +29,17 @@ export function ErrorAlert({
 	className?: string;
 }) {
 	const { t } = useI18n();
-	const keys = error ? errorKeys(error) : null;
+	const storeApp = useInStoreApp();
+	const keys = error ? errorKeys(error, storeApp) : null;
 	const showRetry = Boolean(error?.retryable && onRetry);
+	const showBuy = Boolean(error?.needsCredits && !storeApp);
 	return (
 		<Alert className={cn("border-danger/30 bg-danger-soft/60", className)}>
 			<AlertCircleIcon className="text-danger" />
 			<AlertTitle>{title ?? (keys ? t(keys.title) : "")}</AlertTitle>
 			<AlertDescription className="text-foreground/80">
 				<p>{message ?? (keys ? t(keys.message) : "")}</p>
-				{showRetry || error?.needsCredits ? (
+				{showRetry || showBuy ? (
 					<div className="mt-2 flex gap-2">
 						{showRetry && (
 							<Button size="sm" variant="outline" onClick={onRetry}>
@@ -44,7 +47,7 @@ export function ErrorAlert({
 								{t("errors.tryAgain")}
 							</Button>
 						)}
-						{error?.needsCredits && (
+						{showBuy && (
 							<Button size="sm" asChild>
 								<Link href="/billing">
 									<CoinsIcon />

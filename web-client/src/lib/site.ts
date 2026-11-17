@@ -5,3 +5,6 @@ export const GITHUB_URL = "https://github.com/rubrion/curriclean";
 
 /** Public, indexable landing paths per language. */
 export const LANDING_PATH = { en: "/", pt: "/pt" } as const;
+
+/** Where people write about privacy and account deletion. */
+export const CONTACT_EMAIL = "hello@rubrion.ai";

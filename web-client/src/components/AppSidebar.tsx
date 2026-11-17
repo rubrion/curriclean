@@ -8,13 +8,17 @@ import {
 	LayoutDashboardIcon,
 	ListIcon,
 	LogOutIcon,
+	ShieldIcon,
 	PlusIcon,
 	SparklesIcon,
+	Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 
+import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
 import { Logo } from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -42,6 +46,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { TKey } from "@/i18n/dictionaries";
 import { useBilling } from "@/lib/billing";
+import { useInStoreApp } from "@/lib/storeAppContext";
 import { useI18n } from "@/i18n/client";
 
 const NAV: { href: string; label: TKey; icon: typeof ListIcon }[] = [
@@ -56,6 +61,8 @@ export function AppSidebar() {
 	const board = useSearchParams().get("view") === "board";
 	const { setOpenMobile } = useSidebar();
 	const { t } = useI18n();
+	const storeApp = useInStoreApp();
+	const nav = storeApp ? NAV.filter((item) => item.href !== "/billing") : NAV;
 
 	return (
 		<Sidebar collapsible="icon" variant="inset">
@@ -90,7 +97,7 @@ export function AppSidebar() {
 					<SidebarGroupLabel>{t("nav.workspace")}</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{NAV.map((item) => {
+							{nav.map((item) => {
 								const [path, query] = item.href.split("?");
 								const active =
 									path === "/applications"
@@ -125,6 +132,7 @@ export function AppSidebar() {
 function CreditsCard() {
 	const { billing } = useBilling();
 	const { t } = useI18n();
+	const storeApp = useInStoreApp();
 	if (!billing) return null;
 	if (billing.unlimited) {
 		return (
@@ -157,9 +165,11 @@ function CreditsCard() {
 					<span className="font-semibold tabular-nums text-foreground">{billing.credits}</span>{" "}
 					{t("sidebar.credits")}
 				</span>
-				<Button asChild size="xs" variant="outline">
-					<Link href="/billing">{t("sidebar.topUp")}</Link>
-				</Button>
+				{!storeApp && (
+					<Button asChild size="xs" variant="outline">
+						<Link href="/billing">{t("sidebar.topUp")}</Link>
+					</Button>
+				)}
 			</div>
 		</div>
 	);
@@ -169,6 +179,8 @@ function UserMenu() {
 	const { data } = useSession();
 	const { isMobile } = useSidebar();
 	const { t } = useI18n();
+	const storeApp = useInStoreApp();
+	const [deleting, setDeleting] = useState(false);
 	const user = data?.user;
 	if (!user) return null;
 	const initials = (user.name ?? user.email ?? "?")
@@ -206,18 +218,32 @@ function UserMenu() {
 							{user.email}
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
+						{!storeApp && (
+							<DropdownMenuItem asChild>
+								<Link href="/billing">
+									<CoinsIcon />
+									{t("nav.billing")}
+								</Link>
+							</DropdownMenuItem>
+						)}
 						<DropdownMenuItem asChild>
-							<Link href="/billing">
-								<CoinsIcon />
-								{t("nav.billing")}
+							<Link href="/privacy">
+								<ShieldIcon />
+								{t("user.privacy")}
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
 							<LogOutIcon />
 							{t("user.signOut")}
 						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem variant="destructive" onSelect={() => setDeleting(true)}>
+							<Trash2Icon />
+							{t("user.deleteAccount")}
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
+				<DeleteAccountDialog open={deleting} onOpenChange={setDeleting} />
 			</SidebarMenuItem>
 		</SidebarMenu>
 	);

@@ -11,6 +11,7 @@ import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/f
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useI18n } from "@/i18n/client";
+import { useInStoreApp } from "@/lib/storeAppContext";
 
 const OAUTH_GOOGLE_ENABLED = process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "1";
 const OAUTH_GITHUB_ENABLED = process.env.NEXT_PUBLIC_AUTH_GITHUB_ENABLED === "1";
@@ -27,7 +28,11 @@ function LoginInner() {
 	const router = useRouter();
 	const { t } = useI18n();
 	const params = useSearchParams();
+	// Google refuses sign-in inside app web views (disallowed_useragent).
+	const storeApp = useInStoreApp();
+	const google = OAUTH_GOOGLE_ENABLED && !storeApp;
 	const verified = params.get("verified") === "1";
+	const deleted = params.get("deleted") === "1";
 	const reset = params.get("reset") === "1";
 	const callbackUrl = params.get("callbackUrl") ?? "/dashboard";
 
@@ -54,6 +59,7 @@ function LoginInner() {
 			<AuthHeading title={t("login.title")} description={t("login.subtitle")} />
 
 			{verified && <AuthNotice kind="success">{t("login.verified")}</AuthNotice>}
+			{deleted && <AuthNotice kind="success">{t("login.deleted")}</AuthNotice>}
 			{reset && <AuthNotice kind="success">{t("login.reset")}</AuthNotice>}
 
 			<form onSubmit={onSubmit}>
@@ -92,11 +98,11 @@ function LoginInner() {
 						{t("login.submit")}
 					</Button>
 
-					{(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
+					{(google || OAUTH_GITHUB_ENABLED) && (
 						<>
 							<FieldSeparator>{t("login.or")}</FieldSeparator>
-							<div className="grid gap-2 sm:grid-cols-2">
-								{OAUTH_GOOGLE_ENABLED && (
+							<div className={google && OAUTH_GITHUB_ENABLED ? "grid gap-2 sm:grid-cols-2" : "grid gap-2"}>
+								{google && (
 									<Button type="button" variant="outline" size="lg" onClick={() => signIn("google", { callbackUrl })}>
 										Google
 									</Button>

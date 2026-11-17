@@ -24,7 +24,12 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 				<main className="flex flex-1 items-center justify-center py-10">
 					<div className="w-full max-w-sm">{children}</div>
 				</main>
-				<p className="text-center text-xs text-muted-foreground">{t("auth.footer")}</p>
+				<p className="text-center text-xs text-muted-foreground">
+					{t("auth.footer")} ·{" "}
+					<Link href="/privacy" className="underline-offset-4 hover:text-foreground hover:underline">
+						{t("legal.privacy")}
+					</Link>
+				</p>
 			</div>
 
 			<aside className="relative hidden overflow-hidden bg-sidebar lg:flex lg:flex-col lg:justify-center lg:px-16">
