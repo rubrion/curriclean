@@ -261,8 +261,8 @@ auth.post("/reset", async (c) => {
 
 const OAuthUpsertSchema = z.object({
   email: z.string().email(),
-  name: z.string().max(255).optional(),
-  image: z.string().url().optional(),
+  name: z.string().max(255).nullish(),
+  image: z.string().url().nullish(),
 });
 
 auth.post("/oauth-upsert", async (c) => {
